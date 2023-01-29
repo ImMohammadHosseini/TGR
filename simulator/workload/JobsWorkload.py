@@ -13,7 +13,4 @@ class Workload () :
 				undeployed.append(self.createdJobs[i])
 		return undeployed
 
-	def updateDeployedJobs (self, creationIDs) :
-		for cid in creationIDs:
-			assert not self.deployedJobs[cid]
-			self.deployedJobs[cid] = True
+
