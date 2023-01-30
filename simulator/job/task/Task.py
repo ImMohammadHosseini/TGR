@@ -24,21 +24,42 @@ class Task () :
         self.plan_cpu = plan_cpu
         self.plan_mem = plan_mem
         self.instance_list = instance_list
-        self.status = None
+        if self.task_name[:4] == "task" or self.task_name == 'MergeTask' or \
+            '_' not in self.task_name:
+            self.status = Status.READY
+        else: self.status = Status.WAITING
         
         for instance in self.instance_list:
             instance.task = self
         
         pass
     
+    def set_status (self) :
+        pass
+        
     def set_job (self, job):
         self.job = job
         for instance in self.instance_list:
             instance.job = job
             
-    def instanceGraph (self) :
+    def instanceGraph (self, past_task_num, past_inst_num) :
+        past_inst = past_inst_num
+        x_inst = []
+        source = []
+        dest = []
+        for instance in self.instance_list:
+            x_inst.append([instance.seq_no, instance.total_seq_no,
+                          instance.cpu_max, instance.mem_max])
+            
+            source.append(past_task_num)
+            dest.append(past_inst)
+            past_inst += 1
+        return x_inst, [source, dest], past_inst
         
         
+        
+        x_instance 
+        part_of_edge_index
         
         
         

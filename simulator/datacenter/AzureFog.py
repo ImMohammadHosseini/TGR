@@ -1,12 +1,12 @@
 import numpy as np
-from simulator.host.Disk import Disk
-from simulator.host.RAM import RAM
-from simulator.host.Bandwidth import Bandwidth
-from metrics.powermodels.PMRaspberryPi import *
-from metrics.powermodels.PMB2s import *
-from metrics.powermodels.PMB4ms import *
-from metrics.powermodels.PMB8ms import *
-from metrics.powermodels.PMXeon_X5570 import *
+#from simulator.host.Disk import Disk
+#from simulator.host.RAM import RAM
+#from simulator.host.Bandwidth import Bandwidth
+#from metrics.powermodels.PMRaspberryPi import *
+#from metrics.powermodels.PMB2s import *
+#from metrics.powermodels.PMB4ms import *
+#from metrics.powermodels.PMB8ms import *
+#from metrics.powermodels.PMXeon_X5570 import *
 
 class AzureFog():
     def __init__(self, num_hosts, num_VMs):
@@ -28,11 +28,11 @@ class AzureFog():
 				},
 			'B4ms':
 				{
-					'IPS': 4029,
+					'IPS': 8058,
 					'RAMSize': 17180,
 					'RAMRead': 360.0,
 					'RAMWrite': 305.0,
-					'DiskSize': 32212,
+					'DiskSize': 64424,
 					'DiskRead': 10.38,
 					'DiskWrite': 0.619,
 					'BwUp': 5000,
@@ -41,11 +41,11 @@ class AzureFog():
 				},
 			'B8ms':
 				{
-					'IPS': 16111,
-					'RAMSize': 34360,
+					'IPS': 16116,
+					'RAMSize': 137440,
 					'RAMRead': 376.54,
 					'RAMWrite': 266.75,
-					'DiskSize': 32212,
+					'DiskSize': 1000000,
 					'DiskRead': 11.64,
 					'DiskWrite': 1.164,
 					'BwUp': 5000,
@@ -61,28 +61,23 @@ class AzureFog():
 				{
                     single-core 1.0 GHz CPU, 
                     'RAM': 768,
-                    'Disk':20,
-                     
-					'IPS': 4029,
-					'RAMSize': 4295,
-					'RAMRead': 372.0,
-					'RAMWrite': 200.0,
-					'DiskSize': 32212,
-					'DiskRead': 13.42,
-					'DiskWrite': 1.011,
-					'BwUp': 5000,
-					'BwDown': 5000,
-					'Power': 'PMB2s'
+                    'Disk':20000,
 				},
             'small':
                 {
+                    'RAM':1750
+                    'Disk':22500
                 },
             'medium':
                 {
+                    'RAM':3500
+                    'Disk':49000
                 },
             'large':
                 {
-                }
+                    'RAM':7000
+                    'Disk':100000
+                },
         }
                 
         
