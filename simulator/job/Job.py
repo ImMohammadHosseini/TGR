@@ -14,43 +14,47 @@ class Job () :
         for task in self.task_list:
             task.set_job(self)
     
-    def jobGraphInfo (self, past_num):
-        past_task = past_num
+    def jobGraphInfo (self, past_task_num, past_inst_num):
+        past_task = past_task_num
         x_task = [None] * len(self.task_list)
+        part_of_source = []
+        part_of_dest = []
         source = []
         dest = []
         sorted_task_list = [None] * len(self.task_list)
         for task in self.task_list:
             if task.task_name[:4] == "task" or task.task_name == 'MergeTask':
-                x_task[past_task - past_num] = [task.plan_cpu,
-                                                task.plan_mem,
-                                                len(task.instance_list)]
-                sorted_task_list[past_task - past_num] = task
-                past_task += 1
+                x_task[past_task - past_task_num] = [task.plan_cpu,
+                                                     task.plan_mem,
+                                                     len(task.instance_list),
+                                                     task.status.value]
+                sorted_task_list[past_task - past_task_num] = task
+                
             elif '_' not in task.task_name:
                 x_task[int(task.task_name[1:])] = [task.plan_cpu,
                                                    task.plan_mem,
-                                                   len(task.instance_list)]
+                                                   len(task.instance_list),
+                                                   task.status.value]
                 sorted_task_list[int(task.task_name[1:])] = task
-                past_task += 1
+                
             else:
+                edges = task.task_name.split('_')
                 x_task[int(edges[0][1:])] = [task.plan_cpu,
                                              task.plan_mem,
-                                             len(task.instance_list)]
-                edges = task.task_name.split('_')
+                                             len(task.instance_list),
+                                             task.status.value]
                 sorted_task_list[int(edges[0][1:])] = task
-                dest.append(past_num+int(edges[0][1:]))
+                dest.append(past_task_num+int(edges[0][1:]))
                 for i in edges[1:]:
-                    source.append(past_num+int(i))
-                past_task += 1
+                    source.append(past_task_num+int(i))
                 
                 
-                
-                for i in range(1, len(task.task_name), 2):
-                    
+            x_instance, part_of, past_inst_num=task.instanceGraph(past_task, 
+                                                                  past_inst_num)
+            part_of_source += part_of[0]
+            part_of_dest += part_of[1]
+            past_task += 1
+        return x_task, x_instance, [source,dest], \
+            [part_of_source, part_of_dest], past_task, past_inst_num
         
-        x_task
-        x_instance
-        part_of_edge_index
-        depend_edge_index
         
