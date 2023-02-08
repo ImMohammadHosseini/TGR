@@ -13,43 +13,28 @@ class AzureFog():
         self.num_hosts = num_hosts
         self.edge_hosts = round(num_hosts * 0.6)
         self.host_types = {
-			'B2s':
+			'small':
 				{
-					'IPS': 4029,
-					'RAMSize': 4295,
-					'RAMRead': 372.0,
-					'RAMWrite': 200.0,
-					'DiskSize': 32212,
-					'DiskRead': 13.42,
-					'DiskWrite': 1.011,
-					'BwUp': 5000,
-					'BwDown': 5000,
+                    'core': 200,
+					'mem_size': .4,
+					'DiskSize': 16000,
+					'Bw': 5000,
 					'Power': 'PMB2s'
 				},
-			'B4ms':
+			'medium':
 				{
-					'IPS': 8058,
-					'RAMSize': 17180,
-					'RAMRead': 360.0,
-					'RAMWrite': 305.0,
-					'DiskSize': 64424,
-					'DiskRead': 10.38,
-					'DiskWrite': 0.619,
-					'BwUp': 5000,
-					'BwDown': 5000,
+                    'core': 400,
+                    'mem_size': .8,
+					'DiskSize': 32000,
+					'Bw': 5000,
 					'Power': 'PMB4ms'
 				},
-			'B8ms':
+			'large':
 				{
-					'IPS': 16116,
-					'RAMSize': 137440,
-					'RAMRead': 376.54,
-					'RAMWrite': 266.75,
-					'DiskSize': 1000000,
-					'DiskRead': 11.64,
-					'DiskWrite': 1.164,
-					'BwUp': 5000,
-					'BwDown': 5000,
+                    'core': 800,
+                    'mem_size': 1.8,
+					'DiskSize': 64000,
+					'Bw': 5000,
 					'Power': 'PMB8ms'
 				}
  		}
@@ -59,24 +44,27 @@ class AzureFog():
         self.vm_types = {
 			'Extra-small':
 				{
-                    single-core 1.0 GHz CPU, 
+                    'core': 100,
                     'RAM': 768,
-                    'Disk':20000,
+                    'Disk': 4000
 				},
             'small':
                 {
-                    'RAM':1750
-                    'Disk':22500
+                    'core': 100,
+                    'RAM':1750,
+                    'Disk': 8000
                 },
             'medium':
                 {
-                    'RAM':3500
-                    'Disk':49000
+                    'core': 200,
+                    'RAM':3500,
+                    'Disk': 16000
                 },
             'large':
                 {
-                    'RAM':7000
-                    'Disk':100000
+                    'core': 400,
+                    'RAM':7000,
+                    'Disk': 32000
                 },
         }
                 
