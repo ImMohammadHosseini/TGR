@@ -9,11 +9,14 @@ from copy import deepcopy
 
 
 def convertToOneHot(dat, emb_part_old, nums):
-    alloc = []
+    allocs = []
     for i in dat:
-        oneHot = [0] * nums; alist = i.tolist()[-nums:]
-        oneHot[alist.index(max(alist))] = 1; alloc.append(oneHot)
-    new_dat_oneHot = torch.cat((emb_part_old, torch.FloatTensor(alloc)), dim=1)
+        alloc = []
+        for j in i:
+            oneHot = [0] * nums; alist = j.tolist()[-nums:]
+            oneHot[alist.index(max(alist))] = 1; alloc.append(oneHot)
+        allocs.append(alloc)
+    new_dat_oneHot = torch.cat((emb_part_old, torch.FloatTensor(allocs)), dim=2)
     return new_dat_oneHot
 
 
@@ -23,8 +26,8 @@ def first_step_opt (init, model, data_type):
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=10)
     iteration = 0; equal = 0
     while iteration < 200:
-        emb_part_old = deepcopy(init.data[:,0:-VMS])
-        alloc_old = deepcopy(init.data[:,-VMS:])
+        emb_part_old = deepcopy(init.data[:,:,0:-VMS])
+        alloc_old = deepcopy(init.data[:,:,-VMS:])
         z = model(init)
         optimizer.zero_grad(); z.backward(); optimizer.step(); scheduler.step()
         init.data = convertToOneHot(init.data, emb_part_old, VMS)
