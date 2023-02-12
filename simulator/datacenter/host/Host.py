@@ -5,29 +5,32 @@ Created on Wed Jan 25 16:19:54 2023
 
 @author: mohammad
 """
-from simulator.datacenter.host.Disk import Disk
-from simulator.datacenter.host.RAM import RAM
-from simulator.datacenter.host.Bandwidth import Bandwidth
+#from simulator.datacenter.host.Disk import Disk
+#from simulator.datacenter.host.RAM import RAM
+#from simulator.datacenter.host.Bandwidth import Bandwidth
 
 class Host ():
-    def __init__(self, ID, IPS, RAM, Disk, Bw, Latency, Powermodel, Environment):
-        self.id = ID
-        self.ipsCap = IPS
-        self.ramCap = RAM
-        self.diskCap = Disk
-        self.bwCap = Bw
+    def __init__(self, cores, ram, disk, bw, Latency, Powermodel, Datacenter):
+        self.id = -1
+        self.coreNumCap = cores
+        self.ramCap = ram
+        self.diskCap = disk
+        self.bwCap = bw
         
         
         self.latency = Latency
         self.powermodel = Powermodel
         self.powermodel.allocHost(self)
         self.powermodel.host = self
-        self.env = Environment
+        self.datacenter = Datacenter
         
 
     def getPower(self):
+        return self.powermodel.power()
 
-	def getPowerFromIPS(self, ips):
+    def getPowerFromIPS(self, ips):
+        # TODO 
+        #return self.powermodel.powerFromCPU(min(100, 100 * (ips / self.ipsCap)))
 		
 	def getCPU(self):
 		

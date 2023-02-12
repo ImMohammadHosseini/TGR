@@ -8,13 +8,12 @@ Created on Wed Feb  8 09:47:08 2023
 
 class VM ():
     def __init__(self, 
-                 ID, 
                  core_lim, 
                  ram_lim, 
                  disk_lim, 
                  datacenter, 
                  hostId = -1):
-        self.ID = ID
+        self.ID = -1
         self.core_lim = core_lim
         self.ram_lim = ram_lim
         self.disk_lim = disk_lim
@@ -22,4 +21,9 @@ class VM ():
         self.datacenter = datacenter
         self.hostId = hostId
         
+        self.totalExecTime = 0
+        self.totalMigrationTime = 0
+        self.active = True
         
+    def 
+    
