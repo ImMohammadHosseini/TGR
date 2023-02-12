@@ -1,9 +1,6 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Jan 29 09:30:17 2023
 
-@author: mohammad
+"""
+
 """
 from enum import Enum
  
@@ -18,12 +15,19 @@ class Task () :
     def __init__ (self, task_name : str,
                   plan_cpu,
                   plan_mem,
-                  instance_list) :
+                  plan_disk,
+                  instance_list,
+                  graphId = -1) :
+        self.id = graphId
         self.job = None
         self.task_name = task_name
         self.plan_cpu = plan_cpu
         self.plan_mem = plan_mem
+        self.plan_disk = plan_disk
         self.instance_list = instance_list
+        self.instance_num = len(instance_list)
+        self.destroyAt = -1
+        
         if self.task_name[:4] == "task" or self.task_name == 'MergeTask' or \
             '_' not in self.task_name:
             self.status = Status.READY
@@ -32,7 +36,7 @@ class Task () :
         for instance in self.instance_list:
             instance.task = self
         
-        pass
+        self.instancesId = []
     
     def set_status (self) :
         pass
@@ -48,6 +52,9 @@ class Task () :
         source = []
         dest = []
         for instance in self.instance_list:
+            instance.id = past_inst
+            self.instancesId.append(instance.id)
+            self.job.instancesId.append(instance.id)
             x_inst.append([instance.seq_no, instance.total_seq_no,
                           instance.cpu_max, instance.mem_max])
             
@@ -55,13 +62,7 @@ class Task () :
             dest.append(past_inst)
             past_inst += 1
         return x_inst, [source, dest], past_inst
-        
-        
-        
-        x_instance 
-        part_of_edge_index
-        
-        
+
         
         
         

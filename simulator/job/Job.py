@@ -1,18 +1,21 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Jan 29 09:34:32 2023
 
-@author: mohammad
+"""
 """
 
 class Job () :
-    def __init__ (self, job_id, task_list) :
+    def __init__ (self, job_id, task_list, creationInterval, envirionment) :
         self.job_id = job_id
         self.task_list = task_list
+        self.createAt = creationInterval
+        self.env = envirionment
+        self.startAt = self.env.interval
+        self.destroyAt = -1
         
         for task in self.task_list:
             task.set_job(self)
+            
+        self.tasksId = []
+        self.instancesId = []
     
     def jobGraphInfo (self, past_task_num, past_inst_num):
         past_task = past_task_num
@@ -23,6 +26,8 @@ class Job () :
         dest = []
         sorted_task_list = [None] * len(self.task_list)
         for task in self.task_list:
+            task.id = past_task
+            self.tasksId.append(task.id)
             if task.task_name[:4] == "task" or task.task_name == 'MergeTask':
                 x_task[past_task - past_task_num] = [task.plan_cpu,
                                                      task.plan_mem,

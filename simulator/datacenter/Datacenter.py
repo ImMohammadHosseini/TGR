@@ -26,6 +26,8 @@ class Datacenter (AzureFog) :
         self.generateHosts()
         self.generateVMs()
         
+        self.hostsId = []
+        self.vmsId = []
         
     def generateHosts(self):
         self.hostList = []
@@ -46,10 +48,10 @@ class Datacenter (AzureFog) :
     
     def generateVMs(self):
         self.VMList = []
-        types = ['Extra-small', 'Extra-small', 'Extra-small', 
-                 'small','small','small',
-                 'medium','medium','medium',
-                 'large','large','large'] * 1
+        types = ['Extra-small','Extra-small','Extra-small','Extra-small','Extra-small', 
+                 'small','small','small','small','small',
+                 'medium','medium','medium','medium','medium',
+                 'large','large','large','large','large'] * 1
         for i in range(self.num_VMs):
             typeID = types[i]
             core_lim = self.types[typeID]['core']
@@ -71,11 +73,15 @@ class Datacenter (AzureFog) :
         dsvm_source = []
         dsvm_dest = []
         for host in self.hostList:
+            host.id = past_hosts
+            self.hostsId.append(host.id)
             x_host.append([host.get])
             dsho_source.append(self.id)
             dsho_dest.append(past_hosts)
             past_hosts += 1
         for vm in self.VMList:
+            vm.id = past_vms
+            self.vmsId.append(vm.id)
             x_vm.append([vm.get])
             dsvm_source.append(self.id)
             dsvm_dest.append(past_vms)
@@ -83,6 +89,4 @@ class Datacenter (AzureFog) :
             
         return x_ds, x_host, x_vm, [dsho_source, dsho_dest], \
             [dsvm_source, dsvm_dest], past_hosts, past_vms
-
-
-x_ds, x_host, x_vm, dsho, dsvm        
+       
