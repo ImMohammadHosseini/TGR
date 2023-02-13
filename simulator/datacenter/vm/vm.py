@@ -1,22 +1,21 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Feb  8 09:47:08 2023
 
-@author: mohammad
+"""
+
 """
 
 class VM ():
     def __init__(self, 
                  core_lim, 
                  ram_lim, 
-                 disk_lim, 
+                 disk_lim,
+                 bw_lim,
                  datacenter, 
                  hostId = -1):
         self.ID = -1
-        self.core_lim = core_lim
-        self.ram_lim = ram_lim
-        self.disk_lim = disk_lim
+        self.coreNum = core_lim
+        self.ramCap = ram_lim
+        self.diskCap = disk_lim
+        self.bwCap = bw_lim
         
         self.datacenter = datacenter
         self.hostId = hostId
@@ -25,5 +24,16 @@ class VM ():
         self.totalMigrationTime = 0
         self.active = True
         
-    def 
+    def getFreeCores (self):
+        pass
     
+    def getFreeRam (self):
+        pass
+    
+    def getFreeDisk (self):
+        pass
+    
+    def possibleToAddInstance (self, instance):
+        return (self.getFreeCores() <= instance.cpuMax &&
+                self.getFreeRam() <= instance.memMax &&
+                self.getFreeDisk() <= instance.diskMax)
