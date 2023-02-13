@@ -1,9 +1,6 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Jan 24 09:36:20 2023
 
-@author: mohammad
+"""
+
 """
 import torch
 from torch_geometric.data import HeteroData
@@ -78,6 +75,8 @@ class Simulator () :
         self.graphData['vm', 'run_by', 'host'].edge_index = torch.tensor([[], []])
 
     def nodeUpdate (self) :
+        #TODO Update nodes and edges
+
         pass
     
     def addJobsInit (self, jobsInit):
@@ -105,6 +104,10 @@ class Simulator () :
         self.graphData['task', 'part_of', 'instance'].edge_index = torch.tensor(
             [part_of_source_node, part_of_dest_node])
         self.graphData['instance', 'run_in', 'vm'].edge_index = torch.tensor([[], []])
+
+    def addRunInEdges (self, allocatedInstances):
+        self.graphData['instance', 'run_in', 'vm'].edge_index = torch.tensor(
+            allocatedInstances)
 
 
     def addNewJodsNode (self) :
@@ -138,22 +141,23 @@ class Simulator () :
                     if host.id == hostId:
                         return host
     
-    def updateGraph (self) :
-        pass 
-    #TODO Update nodes and edges
-    
-    def updateDatacentersNode (self) :
-        pass
-    
-    def updateHostsNode (self) :
-        pass
-    
-    def updateVMsNode (self) :
-        pass
-    
-    def updateJobsNode (self) :
-        pass
-    
-    
+    def instanceAllocateInit (self, decision):
+        #add a instance in vm based on the decision if its possible
+        allocate_source = []; allocate_dest = []
+        routerBwToEach = self.totalbw / len(decision[0])
+        for instanceId, vmId in zip(decision[0], decision[1]):
+            instance = self.getInstanceById(instanceId)
+            vm = self.getVmById(vmId)
+            assert instance.vmId == -1
+            numberAllocToVm = len(self.scheduler.getAllocateToVm(vmId, 
+                                                                 decision[1]))
+            allocbw = min(vm.bwCap/ numberAllocToVm, routerBwToEach)
+            if vm.possibleToAddInstance(instance):
+                allocate_source.append(instanceId)
+                allocate_dest.append(vmId)
+                instance.vmId = vmId
+                
+        return [allocate_source, allocate_dest]
+            
     def simulationStep (self) :
-        
+        pass
