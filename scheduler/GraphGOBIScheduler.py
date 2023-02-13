@@ -1,9 +1,6 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Jan 24 09:09:44 2023
 
-@author: mohammad
+"""
+
 """
 import sys
 sys.path.append('scheduler/GraphBaGTI/')
