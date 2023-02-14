@@ -1,11 +1,11 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Jan 25 15:48:06 2023
 
-@author: mohammad
 """
-from simulator.datacenter import AzureFog
+
+"""
+from simulator.datacenter.AzureFog import AzureFog
+from metrics.powermodels.PMB2s import PMB2s
+from metrics.powermodels.PMB4ms import PMB4ms
+from metrics.powermodels.PMB8ms import PMB8ms
 
 #from simulator.datacenter.host.Disk import Disk
 #from simulator.datacenter.host.Bandwidth import Bandwidth
@@ -14,9 +14,9 @@ from simulator.datacenter.host.Host import Host
 from simulator.datacenter.vm.vm import VM 
 
 class Datacenter (AzureFog) :
-    def __init__ (self, ID, num_hosts, num_VMs, Environment) :
-        super(num_hosts, num_VMs)
-        self.id = ID
+    def __init__ (self, Id, num_hosts, num_VMs, Environment) :
+        super().__init__(num_hosts, num_VMs)
+        self.id = Id
         self.env = Environment
 
         
@@ -36,14 +36,13 @@ class Datacenter (AzureFog) :
                  'large', 'large'] * 1
         for i in range(self.num_hosts):
             typeID = types[i]
-            core = self.types[typeID]['core']
-            mem_size = self.types[typeID]['mem_size']
-            disk = self.types[typeID]['DiskSize']
-            Bw = self.types[typeID]['Bw']
-            Power = eval(self.types[typeID]['Power']+'()')
+            core = self.host_types[typeID]['core']
+            mem_size = self.host_types[typeID]['mem_size']
+            disk = self.host_types[typeID]['DiskSize']
+            Bw = self.host_types[typeID]['Bw']
+            Power = eval(self.host_types[typeID]['Power']+'()')
             Latency = 0.003 if i < self.edge_hosts else 0.076
-            host = Host(len(self.hostlist), core, mem_size, disk, Bw, Latency, 
-                        Power, self)
+            host = Host(core, mem_size, disk, Bw, Latency, Power, self)
             self.hostList.append(host)
     
     def generateVMs(self):
@@ -54,10 +53,11 @@ class Datacenter (AzureFog) :
                  'large','large','large','large','large'] * 1
         for i in range(self.num_VMs):
             typeID = types[i]
-            core_lim = self.types[typeID]['core']
-            ram_lim = self.types[typeID]['RAM']
-            disk_lim = self.types[typeID]['Disk']
-            vm = VM (len(self.VMList), core_lim, ram_lim, disk_lim, self)
+            coreLim = self.vm_types[typeID]['core']
+            ramLim = self.vm_types[typeID]['RAM']
+            diskLim = self.vm_types[typeID]['Disk']
+            bwLim = self.vm_types[typeID]['Bw']
+            vm = VM (coreLim, ramLim, diskLim, bwLim, self)
             
             self.VMList.append(vm)
             

@@ -4,28 +4,23 @@
 """
 
 class Instance ():
-    def __init__ (self, instance_name, 
-                  duration,
-                  cpu_avg,
-                  cpu_max,
-                  mem_avg,
-                  mem_max,
-                  disk_max,
-                  graphId = -1,
-                  vmId = -1) :
+    def __init__ (self, instance_name, duration, cpuAvg, cpuMax, memAvg, 
+                  memMax, diskMax, graphId = -1, vmId = -1) :
+        
         self.id = graphId
         self.task=None
         self.job=None
         self.duration = duration
-        self.cpu_avg = cpu_avg
-        self.cpu_max = cpu_max
-        self.mem_avg = mem_avg
-        self.mem_max = mem_max
-        self.disk_max = disk_max
+        self.completDu = 0
+        self.cpuAvg = cpuAvg
+        self.cpuMax = cpuMax
+        self.memAvg = memAvg
+        self.memMax = memMax
+        self.diskMax = diskMax
         self.vmId = vmId
         
-        
-        
+    def requiredExecTime (self):
+        return self.duration - self.completDu
         
         
         
