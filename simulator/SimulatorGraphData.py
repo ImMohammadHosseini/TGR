@@ -109,14 +109,12 @@ class Simulator () :
         self.graphData['instance', 'run_in', 'vm'].edge_index = torch.tensor(
             allocatedInstances)
 
-
+    def addRunByEdges (self, migrations):
+        self.graphData['vm', 'run_by', 'host'].edge_index = torch.tensor(
+            migrations)
+        
     def addNewJodsNode (self) :
         pass
-        
-    def getVMsOfHost (self, dsId, hostId):
-        vms = []
-        #TODO
-        return vms
     
     def getInstanceById (self, instanceId):
         for job in self.joblist:
@@ -144,20 +142,39 @@ class Simulator () :
     def instanceAllocateInit (self, decision):
         #add a instance in vm based on the decision if its possible
         allocate_source = []; allocate_dest = []
-        routerBwToEach = self.totalbw / len(decision[0])
+        #routerBwToEach = self.totalbw / len(decision[0])
         for instanceId, vmId in zip(decision[0], decision[1]):
             instance = self.getInstanceById(instanceId)
             vm = self.getVmById(vmId)
             assert instance.vmId == -1
-            numberAllocToVm = len(self.scheduler.getAllocateToVm(vmId, 
-                                                                 decision[1]))
-            allocbw = min(vm.bwCap/ numberAllocToVm, routerBwToEach)
+            numberAllocToVm = len(self.scheduler.getAllocateToVm(vmId,
+                                                                 decision))
+            #allocbw = min(vm.bwCap/ numberAllocToVm, routerBwToEach)
+            #TODO check expected or main values
             if vm.possibleToAddInstance(instance):
                 allocate_source.append(instanceId)
                 allocate_dest.append(vmId)
                 instance.vmId = vmId
                 
         return [allocate_source, allocate_dest]
-            
+    
+    def vmAllocateInit (self, decision):
+        allocate_source = []; allocate_dest = []
+        routerBwToEach = self.totalbw / len(decision[0])
+        for vmId, hostId in zip(decision[0], decision[1]):
+            vm = self.getVmById(vmId)
+            host = self.getHostById(hostId)
+            assert vm.HostId == -1
+            numberAllocToHost = len(self.scheduler.getAllocateToHost(hostId,
+                                                                     decision))
+            allocbw = min(host.bwCap/ numberAllocToHost, routerBwToEach)
+            #TODO Host possibleToAddVm
+            if host.possibleToAddVm(vm):
+                allocate_source.append(vmId)
+                allocate_dest.append(hostId)
+                vm.allocateAndExecute(host, allocbw)   
+        
+        return [allocate_source, allocate_dest]
+                
     def simulationStep (self) :
         pass
