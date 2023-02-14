@@ -32,6 +32,11 @@ class Host ():
                 vms.append(self.datacenter.env.getVmById(allEdges[0][i]))
         return vms
     
+    def possibleToAddVm (self, vm):
+        return (vm.getRequestsCore() <= self.getCoresAvailable() and \
+                vm.getRequestsRam() <= self.getRAMAvailable() and \
+                vm.getRequestsDisk() <= self.getDiskAvailable())
+    
     def getPower(self):
         return self.powermodel.power()
 
