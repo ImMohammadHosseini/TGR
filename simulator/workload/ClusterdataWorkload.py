@@ -7,7 +7,7 @@ from random import gauss
 from simulator.data.DataPrepration import PrepareData
 from simulator.job.Job import Job
 from simulator.job.task.Task import Task
-from simulator.job.task.instance.instance import Instanse
+from simulator.job.task.inst.instance import Instance
 from simulator.workload.JobsWorkload import Workload
 
 class CDJB (Workload) :
@@ -28,6 +28,9 @@ class CDJB (Workload) :
         
         self.creation_id = 0
         
+        self.meanDisk = 5000
+        self.sigmaDisk = 3000
+        
     def generateNewJobs(self, interval):
         num = int(gauss(self.arrival_rate, self.sigma))
         
@@ -35,7 +38,7 @@ class CDJB (Workload) :
                                    header=None, 
                                    skiprows= self.arrived_jobs,
                                    nrows=num)
-        self.arrived_jobs =+ num
+        self.arrived_jobs += num
         
         workloadtasks = pd.read_csv(self.sample_data+'/tasks/sample_task.csv',
                                     header=None)
@@ -56,26 +59,35 @@ class CDJB (Workload) :
                 task_name = task_info[0]
                 plan_cpu = task_info[7]
                 plan_mem = task_info[8]
+                plan_disk = gauss(self.meanDisk, self.sigmaDisk)
                 tasks_instances = jobs_instances.merge(pd.Series(task_name).rename(2),
                                                        on=2)
                 instance_list=[]
                 for k, instance_info in tasks_instances.iterrows():
                     instance_name = instance_info[0]
-                    seq_no = instance_info[8]
-                    total_seq_no = instance_info[9]
+                    duration = instance_info[6] - instance_info[5]
+                    #seq_no = instance_info[8]
+                    #total_seq_no = instance_info[9]
+                    cpu_avg = instance_info[10]
                     cpu_max = instance_info[11]
+                    mem_avg = instance_info[12]
                     mem_max = instance_info[13]
+                    disk_max = (mem_max/plan_mem) * plan_disk
                     instance_list.append(Instanse (instance_name, 
-                                                   seq_no, 
-                                                   total_seq_no,
+                                                   duration,
+                                                   cpu_avg,
                                                    cpu_max,
-                                                   mem_max))
+                                                   mem_avg,
+                                                   mem_max,
+                                                   disk_max))
                 task_list.append(Task (task_name,
                                        plan_cpu,
                                        plan_mem,
+                                       plan_disk,
                                        instance_list))
-            job_list.append(Job (job_id, task_list))
+            job_list.append(Job (job_id, task_list, interval))
         
         self.createdJobs += job_list
         self.deployedJobs += [False] * len(job_list)
-        return self.getUndeployedJobs()
+        #return self.getUndeployedJobs()
+        return job_list
