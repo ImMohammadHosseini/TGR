@@ -73,7 +73,7 @@ class CDJB (Workload) :
                     mem_avg = instance_info[12]
                     mem_max = instance_info[13]
                     disk_max = (mem_max/plan_mem) * plan_disk
-                    instance_list.append(Instanse (instance_name, 
+                    instance_list.append(Instance (instance_name, 
                                                    duration,
                                                    cpu_avg,
                                                    cpu_max,
