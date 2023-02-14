@@ -2,11 +2,7 @@ import numpy as np
 #from simulator.host.Disk import Disk
 #from simulator.host.RAM import RAM
 #from simulator.host.Bandwidth import Bandwidth
-#from metrics.powermodels.PMRaspberryPi import *
-#from metrics.powermodels.PMB2s import *
-#from metrics.powermodels.PMB4ms import *
-#from metrics.powermodels.PMB8ms import *
-#from metrics.powermodels.PMXeon_X5570 import *
+
 
 class AzureFog():
     def __init__(self, num_hosts, num_VMs):
@@ -46,25 +42,29 @@ class AzureFog():
 				{
                     'core': 100,
                     'RAM': 768,
-                    'Disk': 4000
+                    'Disk': 4000,
+					'Bw': 2000
 				},
             'small':
                 {
                     'core': 100,
                     'RAM':1750,
-                    'Disk': 8000
+                    'Disk': 8000,
+					'Bw': 2000
                 },
             'medium':
                 {
                     'core': 200,
                     'RAM':3500,
-                    'Disk': 16000
+                    'Disk': 16000,
+					'Bw': 4000
                 },
             'large':
                 {
                     'core': 400,
                     'RAM':7000,
-                    'Disk': 32000
+                    'Disk': 32000,
+					'Bw': 4000
                 },
         }
                 
