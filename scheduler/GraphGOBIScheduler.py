@@ -53,7 +53,7 @@ class GraphGOBIScheduler(Scheduler):
                     inits.append(np.concatenate((two_emb, oneHots), axis=1))
                     ins_ids_init.append(ins_id_init)
                     ins_id_init=[]; ins_prep = []; oneHots = []
-        
+                
         return inits, ins_ids_init
     
     def first_step (self, first_sch = False) :
@@ -65,7 +65,7 @@ class GraphGOBIScheduler(Scheduler):
                                                        instance_emb, 
                                                        schedueled_instances)
         init = torch.tensor(init, dtype=torch.float, requires_grad=True)
-        result, iteration, fitness = opt(init, self.model, 
+        result, iteration, fitness = opt(init, self.model1, 
                                          int(self.data_type.split('_')[-1]))
         decisionSource = []; decisionDest = []
         for partsId, part in zip(instance_ids_init, result):
@@ -88,7 +88,7 @@ class GraphGOBIScheduler(Scheduler):
             oneHot = [0] * len(host_emb)
             oneHot[np.random.randint(0,len(host_emb))] = 1
             oneHots.append(oneHot)
-            if len(vm_prep) == len(host_emb) or i == len(vm_prep)-1:
+            if len(vm_prep) == len(host_emb):
                 two_emb = np.concatenate((host_emb, vm_emb), axis=1)
                 inits.append(np.concatenate((two_emb, oneHots), axis=1))
                 vm_ids_init.append(vm_id_init)
@@ -101,7 +101,7 @@ class GraphGOBIScheduler(Scheduler):
         host_emb, vm_emb, _ = self.graphRepre(self.env.graph_data)
         init, vm_ids_init = self.second_step_init(vm_emb, host_emb)
         init = torch.tensor(init, dtype=torch.float, requires_grad=True)
-        result, iteration, fitness = opt(init, self.model, 
+        result, iteration, fitness = opt(init, self.model2, 
                                          int(self.data_type.split('_')[-2]))
         
         decisionSource = []; decisionDest = []
