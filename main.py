@@ -14,6 +14,7 @@ from os import system, rename
 from simulator.SimulatorGraphData import Simulator
 from scheduler.GraphGOBIScheduler import GraphGOBIScheduler
 from simulator.workload.ClusterdataWorkload import CDJB
+from utils.ColorUtils import color
 
 usage = "usage: python main.py -e <environment> -m <mode> # empty environment run simulator"
 
@@ -41,7 +42,7 @@ if len(sys.argv) > 1:
 	with open(logFile, 'w'): os.utime(logFile, None)
 
 
-def initalizeEnvironment(environment, logger):
+def initalizeEnvironment (environment, logger):
     
     workload = CDJB(ARRIVALRATE, 2)
     scheduler = GraphGOBIScheduler('energy_latency_'+str(HOSTS)+'_'+str(VMS))
@@ -49,11 +50,43 @@ def initalizeEnvironment(environment, logger):
                     scheduler, INTERVAL_TIME, DATACENTERINFO)
     #TODO add state stats = Stats(env, workload, datacenter, scheduler)
     newjobinfos = workload.generateNewContainers(env.interval)
+    env.addJobsInit(newjobinfos)
+    start = time()
+    instDecision = scheduler.instancePlacement(first_sch = True)
+    firstSchedulingTime = time() - start
+    instAllocation = env.instanceAllocateInit(instDecision) 
+    env.addRunInEdges(instAllocation)
+    
+    start = time()
+    vmDecision = scheduler.vmPlacement()
+    secondSchedulingTime = time() - start
+    migration = env.vmAllocateInit(vmDecision)#TOD Vm execute
+    env.addRunByEdges(migration)
+    
+    schedulingTime = firstSchedulingTime + secondSchedulingTime
+    
+    #TODOworkload.updateDeployedContainers(env.getCreationIDs(migrations, deployed)) 
+    print()
+    print()
+    print()
+    #TODOprintDecisionAndMigrations(decision, migrations)
 
+    #TODOstats.saveStats()
+    
+    return workload, scheduler, env#, stats
 
-
+def stepSimulation (workload, scheduler, env):
+    
+    
+    pass
 if __name__ == '__main__':
     env, mode = opts.env, int(opts.mode)
     
-    datacenter, workload, scheduler, env, stats = initalizeEnvironment(env, 
-                                                                       logger)
+    workload, scheduler, env = initalizeEnvironment(env, logger)
+    
+    for step in range(NUM_SIM_STEPS):
+        print(color.BOLD+"Simulation Interval:", step, color.ENDC)
+        stepSimulation(workload, scheduler, env)#, stats
+        #TODOif env != '' and step % 10 == 0: saveStats()
+        
+    #TODOsaveStats(stats, datacenter, workload, env)
