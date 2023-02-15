@@ -49,7 +49,7 @@ def initalizeEnvironment (environment, logger):
     env = Simulator(DATACENTERS, HOSTS, VMS, TOTAL_POWER, ROUTER_BW, 
                     scheduler, INTERVAL_TIME, DATACENTERINFO)
     #TODO add state stats = Stats(env, workload, datacenter, scheduler)
-    newjobinfos = workload.generateNewContainers(env.interval)
+    newjobinfos = workload.generateNewJobs(env.interval)
     env.addJobsInit(newjobinfos)
     start = time()
     instDecision = scheduler.instancePlacement(first_sch = True)
@@ -60,7 +60,7 @@ def initalizeEnvironment (environment, logger):
     start = time()
     vmDecision = scheduler.vmPlacement()
     secondSchedulingTime = time() - start
-    migration = env.vmAllocateInit(vmDecision)#TOD Vm execute
+    migration = env.vmAllocateInit(vmDecision)#TODO Vm execute
     env.addRunByEdges(migration)
     
     schedulingTime = firstSchedulingTime + secondSchedulingTime
@@ -76,9 +76,17 @@ def initalizeEnvironment (environment, logger):
     return workload, scheduler, env#, stats
 
 def stepSimulation (workload, scheduler, env):
+    newjobinfos = workload.generateNewJobs(env.interval)
+    deployed, destroyed = env.addJobs(newcontainerinfos)ll#TODO trace, -deployed
+    start = time()
+    decision = scheduler.filter_placement(scheduler.placement(deployed)) 
+    firstSchedulingTime = time() - start
     
     
-    pass
+    
+    
+    
+    
 if __name__ == '__main__':
     env, mode = opts.env, int(opts.mode)
     
