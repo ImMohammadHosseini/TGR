@@ -1,5 +1,4 @@
 
-import os 
 from os import path
 import pandas as pd
 from random import gauss
@@ -12,11 +11,11 @@ from simulator.workload.JobsWorkload import Workload
 
 class CDJB (Workload) :
     def __init__ (self, 
-                  arrival_rate, 
+                  arrivalRate, 
                   sigmaNumJobs,
                   sample_data :str = 'simulator/data/datasets/sampling') :
         
-        self.arrival_rate = arrival_rate
+        self.arrivalRate = arrivalRate
         self.sigma = sigmaNumJobs
         
         self.sample_data = sample_data
@@ -32,7 +31,7 @@ class CDJB (Workload) :
         self.sigmaDisk = 3000
         
     def generateNewJobs(self, interval):
-        num = int(gauss(self.arrival_rate, self.sigma))
+        num = int(gauss(self.arrivalRate, self.sigma))
         
         workloadjobs = pd.read_csv(self.sample_data+'/sample_jobs.csv', 
                                    header=None, 

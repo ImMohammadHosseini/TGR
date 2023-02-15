@@ -7,9 +7,6 @@ from metrics.powermodels.PMB2s import PMB2s
 from metrics.powermodels.PMB4ms import PMB4ms
 from metrics.powermodels.PMB8ms import PMB8ms
 
-#from simulator.datacenter.host.Disk import Disk
-#from simulator.datacenter.host.Bandwidth import Bandwidth
-#from simulator.datacenter.host.RAM import RAM
 from simulator.datacenter.host.Host import Host
 from simulator.datacenter.vm.vm import VM 
 
@@ -63,15 +60,11 @@ class Datacenter (AzureFog) :
             
             
     def dsGraphInfo (self, past_host_num, past_vm_num):
-        past_hosts = past_host_num
-        past_vms = past_vm_num
+        past_hosts = past_host_num; past_vms = past_vm_num
         x_ds = [self.num_hosts, self.num_VMs]
-        x_host = []
-        x_vm = []
-        dsho_source = []
-        dsho_dest = []
-        dsvm_source = []
-        dsvm_dest = []
+        x_host = []; x_vm = []
+        dsho_source = []; dsho_dest = []
+        dsvm_source = []; dsvm_dest = []
         for host in self.hostList:
             host.id = past_hosts
             self.hostsId.append(host.id)

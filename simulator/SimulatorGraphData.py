@@ -8,27 +8,20 @@ from simulator.datacenter.Datacenter import Datacenter
 
 
 class Simulator () :
-    def __init__ (self,
-                  num_datacenters,
-                  num_hosts, 
-                  num_VMs,
-                  TotalPower, 
-                  RouterBw, 
-                  Scheduler,  
-                  IntervalTime, 
-                  datacenterlistinit):
+    def __init__ (self, numDatacenters, numHosts, numVMs, totalPower, 
+                  routerBw, scheduler, intervalTime, datacenterlistinit):
         
-        self.totalpower = TotalPower
-        self.totalbw = RouterBw
-        self.datacenterlimit = num_datacenters
-        self.hostlimit = num_datacenters * num_hosts
-        self.vmlimit = num_datacenters * num_VMs     
-        self.scheduler = Scheduler
+        self.totalpower = totalPower
+        self.totalbw = routerBw
+        self.datacenterlimit = numDatacenters
+        self.hostLimit = numDatacenters * numHosts
+        self.vmLimit = numDatacenters * numVMs     
+        self.scheduler = scheduler
         self.scheduler.setEnvironment(self)
-        self.intervaltime = IntervalTime
+        self.intervaltime = intervalTime
         self.interval = 0
         
-        self.inactiveContainers = []#TODO
+        #self.inactiveContainers = []#TODO
         self.stats = None
         
         self.datacenterlist = []
