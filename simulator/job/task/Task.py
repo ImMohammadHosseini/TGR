@@ -12,20 +12,21 @@ class Status(Enum):
     
     
 class Task () :
-    def __init__ (self, task_name : str,
-                  plan_cpu,
-                  plan_mem,
-                  plan_disk,
-                  instance_list,
+    def __init__ (self, taskName : str,
+                  planCpu,
+                  planMem,
+                  planDisk,
+                  instanceList,
                   graphId = -1) :
         self.id = graphId
         self.job = None
-        self.task_name = task_name
-        self.plan_cpu = plan_cpu
-        self.plan_mem = plan_mem
-        self.plan_disk = plan_disk
-        self.instance_list = instance_list
-        self.instance_num = len(instance_list)
+        self.taskName = taskName
+        self.planCpu = planCpu
+        self.planMem = planMem
+        self.planDisk = planDisk
+        self.instanceList = instanceList
+        self.completedInstances = []
+        self.instance_num = len(instanceList)
         self.destroyAt = -1
         
         if self.task_name[:4] == "task" or self.task_name == 'MergeTask' or \
@@ -38,6 +39,19 @@ class Task () :
         
         self.instancesId = []
     
+    def destroyCompletedInstances (self):
+        remainInstances = []
+        for instance in self.instanceList:
+            if instance.requiredExecTime() > 0:
+                remainInstances.append(instance)
+            else: 
+                instance.destroy()
+                self.completedInstances.append(instance)
+        self.instanceList = remainInstances
+    
+    def destroy (self):
+        self.destroyAt = self.job.env.interval
+        
     def set_status (self) :
         pass
         

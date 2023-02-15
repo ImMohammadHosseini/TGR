@@ -25,8 +25,8 @@ class Simulator () :
         self.stats = None
         
         self.datacenterlist = []
-        self.joblist = []
-        
+        self.jobList = []
+        self.completedJobs = []
         
         self.graphData = HeteroData()
         
@@ -72,9 +72,30 @@ class Simulator () :
 
         pass
     
+    def destroyCompletedJobs (self):
+        remainJobs = []; destroyed = []
+        for job in self.jobList:
+            job.destroyCompletedTasks()
+            if len(job.taskList) != 0:
+                remainJobs.append(job)
+            else:
+                job.destroy()
+                destroyed.append(job)
+        self.jobList = remainJobs
+        self.completedJobs += destroyed
+        return destroyed
+    
+    def addJobs (self, newJobsList):
+        self.interval += 1
+        destroyed = self.destroyCompletedJobs()
+        self.jobList += newJobsList
+        #TODO graph node
+        ;;;;;kjhgf
+        return destroyed
+        
     def addJobsInit (self, jobsInit):
         self.interval += 1
-        self.joblist = jobsInit
+        self.jobList = jobsInit
         self.jobsNodeInit()
         
     def jobsNodeInit (self):
@@ -82,7 +103,7 @@ class Simulator () :
         x_task = []; x_instance = []
         depend_source_node = []; depend_dest_node = []; part_of_source_node = []
         part_of_dest_node = []
-        for job in self.joblist:
+        for job in self.jobList:
             x_task_job, x_inst_job, depend, part_of, all_task_num, all_inst_num = \
                 job.jobGraphInfo(all_task_num, all_inst_num)
                 
@@ -110,7 +131,7 @@ class Simulator () :
         pass
     
     def getInstanceById (self, instanceId):
-        for job in self.joblist:
+        for job in self.jobList:
             if instanceId in job.instancesId:
                 for task in job.task_list:
                     if instanceId in task.instancesId:
@@ -158,8 +179,8 @@ class Simulator () :
             vm = self.getVmById(vmId)
             host = self.getHostById(hostId)
             assert vm.HostId == -1
-            numberAllocToHost = len(self.scheduler.getAllocateToHost(hostId,
-                                                                     decision))
+            numberAllocToHost = len(self.scheduler.getMigrationToHost(hostId,
+                                                                      decision))
             allocbw = min(host.bwCap/ numberAllocToHost, routerBwToEach)
             #TODO Host possibleToAddVm
             if host.possibleToAddVm(vm):

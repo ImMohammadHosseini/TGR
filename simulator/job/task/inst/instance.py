@@ -22,8 +22,10 @@ class Instance ():
     def requiredExecTime (self):
         return self.duration - self.completDu
         
-        
-        
+    def destroy (self):
+        self.destroyAt = self.job.env.interval
+        self.vmId = -1
+    
     def getVmId (self):
         return self.vmId
     

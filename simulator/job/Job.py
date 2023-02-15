@@ -3,9 +3,10 @@
 """
 
 class Job () :
-    def __init__ (self, job_id, task_list, creationInterval, envirionment) :
+    def __init__ (self, job_id, taskList, creationInterval, envirionment) :
         self.job_id = job_id
-        self.task_list = task_list
+        self.taskList = taskList
+        self.completedTasks = []
         self.createAt = creationInterval
         self.env = envirionment
         self.startAt = self.env.interval
@@ -16,6 +17,20 @@ class Job () :
             
         self.tasksId = []
         self.instancesId = []
+    
+    def destroyCompletedTasks (self):
+        remainTasks = []
+        for task in self.taskList:
+            task.destroyCompletedInstances()
+            if len(task.instanceList) != 0:
+                remainTasks.append(task)
+            else:
+                task.destroy()
+                self.completedTasks.append(task)
+        self.taskList = remainTasks
+                
+    def destroy (self):
+        self.destroyAt = self.env.interval
     
     def jobGraphInfo (self, past_task_num, past_inst_num):
         past_task = past_task_num
