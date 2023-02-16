@@ -21,7 +21,7 @@ class Simulator () :
         self.intervaltime = intervalTime
         self.interval = 0
         
-        #self.inactiveContainers = []#TODO
+        #self.inactiveContainers = []
         self.stats = None
         
         self.datacenterlist = []
@@ -29,10 +29,31 @@ class Simulator () :
         self.completedJobs = []
         
         self.graphData = HeteroData()
+        self.graphInit()
         
         self.addDatacenterListInit(datacenterlistinit)
         
-    
+    def graphInit (self):
+        self.graphData['datacenter'].x = torch.tensor([])
+        self.graphData['host'].x = torch.tensor([])
+        self.graphData['vm'].x = torch.tensor([])
+        self.graphData['task'].x = torch.tensor([])
+        self.graphData['task'].creationIds = torch.tensor([])
+        self.graphData['instance'].x = torch.tensor([])
+        self.graphData['instance'].creationIds = torch.tensor([])
+        
+        self.graphData['datacenter', 'dsho', 'host'] = torch.tensor([[],[]])
+        self.graphData['datacenter', 'dsvm', 'vm'].edge_index = torch.tensor(
+                                                                        [[],[]])
+        self.graphData['vm', 'run_by', 'host'].edge_index = torch.tensor(
+                                                                        [[], []])
+        self.graphData['task', 'depend', 'task'].edge_index = torch.tensor(
+                                                                        [[], []])
+        self.graphData['task', 'part_of', 'instance'].edge_index = torch.tensor(
+                                                                        [[], []])
+        self.graphData['instance', 'run_in', 'vm'].edge_index = torch.tensor(
+                                                                        [[], []])
+        
     def addDatacenterListInit (self, datacenterlist) :
         assert len(datacenterlist) == self.datacenterlimit
         for numHosts, numVMs in datacenterlist:
@@ -65,7 +86,6 @@ class Simulator () :
                                             [dsho_source_node, dsho_dest_node])
         self.graphData['datacenter', 'dsvm', 'vm'].edge_index = torch.tensor(
                                             [dsvm_source_node, dsvm_dest_node])
-        self.graphData['vm', 'run_by', 'host'].edge_index = torch.tensor([[], []])
 
     def nodeUpdate (self) :
         #TODO Update nodes and edges
@@ -88,36 +108,48 @@ class Simulator () :
     def addJobs (self, newJobsList):
         self.interval += 1
         destroyed = self.destroyCompletedJobs()
+        self.addJobNodes(newJobsList)
         self.jobList += newJobsList
-        #TODO graph node
-        ;;;;;kjhgf
         return destroyed
         
     def addJobsInit (self, jobsInit):
         self.interval += 1
+        self.addJobNodes(jobsInit)
         self.jobList = jobsInit
-        self.jobsNodeInit()
         
-    def jobsNodeInit (self):
-        all_task_num = 0; all_inst_num = 0
-        x_task = []; x_instance = []
-        depend_source_node = []; depend_dest_node = []; part_of_source_node = []
-        part_of_dest_node = []
-        for job in self.jobList:
-            x_task_job, x_inst_job, depend, part_of, all_task_num, all_inst_num = \
+    def addJobNodes (self, jobsList):
+        all_task_num = len(self.graphData['task'].x)
+        all_inst_num = len(self.graphData['instance'].x)
+        x_task = []; cid_task = [] 
+        x_instance = []; cid_instance = []
+        depend_source_node = []; depend_dest_node = [] 
+        part_of_source_node = []; part_of_dest_node = []
+        for job in jobsList:
+            x_task_job, task_cid, x_inst_job,inst_cid, depend, part_of,\
+                all_task_num, all_inst_num = \
                 job.jobGraphInfo(all_task_num, all_inst_num)
                 
-            x_task += x_task_job; x_instance += x_inst_job
+            x_task += x_task_job; cid_task += task_cid
+            x_instance += x_inst_job; cid_instance += inst_cid
             depend_source_node += depend[0] ; depend_dest_node += depend[1] 
             part_of_source_node += part_of[0]; part_of_dest_node += part_of[1]
             
-        self.graphData['task'].x = torch.tensor(x_task)
-        self.graphData['instance'].x = torch.tensor(x_instance)
-        self.graphData['task', 'depend', 'task'].edge_index = torch.tensor(
-            [depend_source_node, depend_dest_node])
-        self.graphData['task', 'part_of', 'instance'].edge_index = torch.tensor(
-            [part_of_source_node, part_of_dest_node])
-        self.graphData['instance', 'run_in', 'vm'].edge_index = torch.tensor([[], []])
+        self.graphData['task'].x = torch.cat((self.graphData['task'].x, 
+                                              torch.tensor(x_task)))
+        self.graphData['task'].creationIds = torch.cat((self.graphData['task'].creationIds, 
+                                                        torch.tensor(cid_task)))
+        
+        self.graphData['instance'].x = torch.cat((self.graphData['instance'].x, 
+                                                  torch.tensor(x_instance)))
+        self.graphData['instance'].creationIds = torch.cat((self.graphData['instance'].creationIds, 
+                                                            torch.tensor(cid_instance)))
+        
+        self.graphData['task', 'depend', 'task'].edge_index = torch.cat((
+            self.graphData['task', 'depend', 'task'].edge_index, 
+            torch.tensor([depend_source_node, depend_dest_node])))
+        self.graphData['task', 'part_of', 'instance'].edge_index = torch.cat((
+            self.graphData['task', 'part_of', 'instance'].edge_index, 
+            torch.tensor([part_of_source_node, part_of_dest_node])))
 
     def addRunInEdges (self, allocatedInstances):
         self.graphData['instance', 'run_in', 'vm'].edge_index = torch.tensor(

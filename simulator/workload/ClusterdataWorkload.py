@@ -25,7 +25,8 @@ class CDJB (Workload) :
         self.jobs_sample_path = 'simulator/data/datasets/sampling/sample_jobs.csv'
         self.arrived_jobs = 0
         
-        self.creation_id = 0
+        self.taskCreated = 0
+        self.instanceCreated = 0
         
         self.meanDisk = 5000
         self.sigmaDisk = 3000
@@ -72,18 +73,14 @@ class CDJB (Workload) :
                     mem_avg = instance_info[12]
                     mem_max = instance_info[13]
                     disk_max = (mem_max/plan_mem) * plan_disk
-                    instance_list.append(Instance (instance_name, 
-                                                   duration,
-                                                   cpu_avg,
-                                                   cpu_max,
-                                                   mem_avg,
-                                                   mem_max,
-                                                   disk_max))
-                task_list.append(Task (task_name,
-                                       plan_cpu,
-                                       plan_mem,
-                                       plan_disk,
-                                       instance_list))
+                    instance_list.append(Instance (self.instanceCreated,
+                                                   duration, cpu_avg, cpu_max,
+                                                   mem_avg, mem_max, disk_max))
+                    self.instanceCreated += 1
+                    
+                task_list.append(Task (task_name, self.taskCreated, plan_cpu,
+                                       plan_mem, plan_disk, instance_list))
+                self.taskCreated += 1
             job_list.append(Job (job_id, task_list, interval))
         
         self.createdJobs += job_list

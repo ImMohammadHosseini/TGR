@@ -2,8 +2,10 @@
 """
 
 """
+import torch
+import numpy as np
 from enum import Enum
- 
+
 class Status(Enum):
     READY = 1
     WAITING = 2
@@ -12,13 +14,11 @@ class Status(Enum):
     
     
 class Task () :
-    def __init__ (self, taskName : str,
-                  planCpu,
-                  planMem,
-                  planDisk,
-                  instanceList,
-                  graphId = -1) :
-        self.id = graphId
+    def __init__ (self, taskName, creaisionId, planCpu, planMem, planDisk,
+                  instanceList, graphId = -1) :
+        
+        self.creationId = creaisionId
+        self.graphId = graphId
         self.job = None
         self.taskName = taskName
         self.planCpu = planCpu
@@ -38,6 +38,17 @@ class Task () :
             instance.task = self
         
         self.instancesId = []
+        
+    def setGraphId (self, id):
+        self.graphId = id
+        
+    def getGraphId (self):
+        creationIds = self.job.env.graphData['task'].creationIds.detach().numpy()
+        graphId = np.where(creationIds == self.creationId)
+        assert len(graphId) == 1
+        graphId = graphId[0][0]
+        self.setGraphId(graphId)
+        return graphId
     
     def destroyCompletedInstances (self):
         remainInstances = []
@@ -49,9 +60,7 @@ class Task () :
                 self.completedInstances.append(instance)
         self.instanceList = remainInstances
     
-    def destroy (self):
-        self.destroyAt = self.job.env.interval
-        
+    
     def set_status (self) :
         pass
         
@@ -62,25 +71,49 @@ class Task () :
             
     def instanceGraph (self, past_task_num, past_inst_num) :
         past_inst = past_inst_num
-        x_inst = []
-        source = []
-        dest = []
+        x_inst = []; creationId_instance = []
+        source = []; dest = []
         for instance in self.instance_list:
-            instance.id = past_inst
-            self.instancesId.append(instance.id)
-            self.job.instancesId.append(instance.id)
+            instance.setCreationId(past_inst)
+            self.instancesId.append(instance.graphId)
+            self.job.instancesId.append(instance.graphId)
             x_inst.append([instance.seq_no, instance.total_seq_no,
                           instance.cpu_max, instance.mem_max])
+            creationId_instance.append(instance.creationId)
             
             source.append(past_task_num)
             dest.append(past_inst)
             past_inst += 1
-        return x_inst, [source, dest], past_inst
+        return x_inst, creationId_instance, [source, dest], past_inst
+ 
+    def destroy (self, instanceId):
+        self.destroyAt = self.job.env.interval
+        self.destroyTaskNode()
+    
+    def destroyTaskNode (self):
+        graphId = self.getGraphId()
+        tasksNodes = self.job.env.graphData['task'].x
+        self.job.env.graphData['task'].x = torch.cat([tasksNodes[0:graphId], 
+                                                      tasksNodes[graphId+1:]])
+        taskIds = self.job.env.graphData['task'].creationIds
+        self.job.env.graphData['task'].creationIds=torch.cat([taskIds[0:graphId], 
+                                                          taskIds[graphId+1:]])
+        
+        dEdge0 = self.job.env.graphData['task', 'depend', 'task'].edge_index[0]
+        dEdge0 = dEdge0.detach().numpy()
+        dEdge1 = self.job.env.graphData['task', 'depend', 'task'].edge_index[1]
+        dEdge1 = dEdge1.detach().numpy()
+        indx = np.where(dEdge0 == graphId)
+        dEdge0 = np.delete(dEdge0, indx)
+        dEdge1 = np.delete(dEdge1, indx)
+        dEdge0 = np.where(dEdge0<=graphId, dEdge0, dEdge0-1)
 
-        
-        
-        
-        
+        indx = np.where(dEdge1 == graphId)
+        dEdge0 = np.delete(dEdge0, indx)
+        dEdge1 = np.delete(dEdge1, indx)
+        dEdge1 = np.where(dEdge1<=graphId, dEdge1, dEdge1-1)
+        self.job.env.graphData['task', 'depend', 'task'].edge_index = \
+            torch.tensor([dEdge0, dEdge1]) 
         
         
         
