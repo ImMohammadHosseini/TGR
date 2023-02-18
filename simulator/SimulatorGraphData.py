@@ -169,7 +169,18 @@ class Simulator () :
                                                                         all_dest])
         
         return source, dest
+    
+    def getjobIds (self):
+        return [job.job_id for job in self.jobList]
         
+    def getInstancsInVms (self):
+        edges = self.graphData['instance', 'run_in', 'vm'].edge_index
+        return [(instId, vmId) for instId, vmId in zip(edges[0],edges[1])]
+    
+    def getVmsInHosts (self):
+        edges = self.graphData['vm', 'run_by', 'host'].edge_index
+        return [(vmId, hostId) for vmId, hostId in zip(edges[0],edges[1])]
+    
     def getInstanceById (self, instanceId):
         for job in self.jobList:
             if instanceId in job.instancesId:
@@ -201,8 +212,8 @@ class Simulator () :
             instance = self.getInstanceById(instanceId)
             vm = self.getVmById(vmId)
             assert instance.vmId == -1
-            numberAllocToVm = len(self.scheduler.getAllocateToVm(vmId,
-                                                                 decision))
+            #numberAllocToVm = len(self.scheduler.getAllocateToVm(vmId,
+            #                                                    decision))
             #allocbw = min(vm.bwCap/ numberAllocToVm, routerBwToEach)
             #TODO check expected or main values
             if vm.possibleToAddInstance(instance):
