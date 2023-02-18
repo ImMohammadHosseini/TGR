@@ -66,9 +66,10 @@ def initalizeEnvironment (environment, logger):
     schedulingTime = firstSchedulingTime + secondSchedulingTime
     
     #TODOworkload.updateDeployedContainers(env.getCreationIDs(migrations, deployed)) 
-    print()
-    print()
-    print()
+    print("All jobs' IDs:", env.getCreationIDs())
+    print("Instances in vms (instId, vmId):", env.getInstancsInVms())
+    print("VMs in host (vmId, hostId):", env.getVmsInHosts())
+    
     #TODOprintDecisionAndMigrations(decision, migrations)
 
     #TODOstats.saveStats()
@@ -92,8 +93,12 @@ def stepSimulation (workload, scheduler, env):
 
     #TODOworkload.updateDeployedContainers(
     
-    
-    
+    print("All jobs' IDs:", env.getCreationIDs())
+    print("Destroyed:", destroyed)
+    print("Instances in vms (instId, vmId):", env.getInstancsInVms())
+    print("VMs in host (vmId, hostId):", env.getVmsInHosts())
+    #printDecisionAndMigrations(decision, migrations)
+    #TODOstats.saveStats()
     
 if __name__ == '__main__':
     env, mode = opts.env, int(opts.mode)
