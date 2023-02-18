@@ -2,6 +2,7 @@
 """
 
 """
+import numpy as np
 import torch
 from torch_geometric.data import HeteroData
 from simulator.datacenter.Datacenter import Datacenter
@@ -86,11 +87,6 @@ class Simulator () :
                                             [dsho_source_node, dsho_dest_node])
         self.graphData['datacenter', 'dsvm', 'vm'].edge_index = torch.tensor(
                                             [dsvm_source_node, dsvm_dest_node])
-
-    def nodeUpdate (self) :
-        #TODO Update nodes and edges
-
-        pass
     
     def destroyCompletedJobs (self):
         remainJobs = []; destroyed = []
@@ -146,29 +142,41 @@ class Simulator () :
         
         self.graphData['task', 'depend', 'task'].edge_index = torch.cat((
             self.graphData['task', 'depend', 'task'].edge_index, 
-            torch.tensor([depend_source_node, depend_dest_node])))
+            torch.tensor([depend_source_node, depend_dest_node])), dim = 1)
         self.graphData['task', 'part_of', 'instance'].edge_index = torch.cat((
             self.graphData['task', 'part_of', 'instance'].edge_index, 
-            torch.tensor([part_of_source_node, part_of_dest_node])))
+            torch.tensor([part_of_source_node, part_of_dest_node])), dim = 1)
 
     def addRunInEdges (self, allocatedInstances):
-        self.graphData['instance', 'run_in', 'vm'].edge_index = torch.tensor(
-            allocatedInstances)
+        self.graphData['instance', 'run_in', 'vm'].edge_index = torch.cat((
+            self.graphData['instance', 'run_in', 'vm'].edge_index,
+            torch.tensor(allocatedInstances)), dim = 1)
 
     def addRunByEdges (self, migrations):
-        self.graphData['vm', 'run_by', 'host'].edge_index = torch.tensor(
-            migrations)
+        source = self.graphData['vm', 'run_by', 'host'].edge_index[0]
+        source = source.detach().numpy()
+        dest = self.graphData['vm', 'run_by', 'host'].edge_index[1]
+        dest = dest.detach().numpy()
+        for vid in migrations[0]:
+            indx = np.where(source == vid)
+            source = np.delete(source, indx)
+            dest = np.delete(dest, indx)
         
-    def addNewJodsNode (self) :
-        pass
-    
+        all_source = list(source) + migrations[0]
+        all_dest = list(dest) + migrations[1]
+        
+        self.graphData['vm', 'run_by', 'host'].edge_index=torch.tensor([all_source, 
+                                                                        all_dest])
+        
+        return source, dest
+        
     def getInstanceById (self, instanceId):
         for job in self.jobList:
             if instanceId in job.instancesId:
                 for task in job.task_list:
                     if instanceId in task.instancesId:
                         for instance in task.instance_list:
-                            if instance.id == instanceId:
+                            if instance.getGraphId() == instanceId:
                                 return instance
                             
     def getVmById (self, vmId):
@@ -185,7 +193,7 @@ class Simulator () :
                     if host.id == hostId:
                         return host
     
-    def instanceAllocateInit (self, decision):
+    def instanceAllocate (self, decision):
         #add a instance in vm based on the decision if its possible
         allocate_source = []; allocate_dest = []
         #routerBwToEach = self.totalbw / len(decision[0])
@@ -220,7 +228,35 @@ class Simulator () :
                 allocate_dest.append(hostId)
                 vm.allocateAndExecute(host, allocbw)   
         
+        _, _ = self.addRunByEdges([allocate_source, allocate_dest])
+        
         return [allocate_source, allocate_dest]
                 
-    def simulationStep (self) :
-        pass
+    def simulationStep (self, decision) :
+        routerBwToEach=self.totalbw/len(decision[0]) if len(decision[0]) > 0 \
+            else self.totalbw
+        migrationsSource = []; migrationDest = []    
+        for vid, hid in zip(decision[0], decision[1]):
+            vm = self.getVmByID(vid)
+            currentHostID = vm.getHostID()
+            currentHost = self.getHostByID(currentHostID)
+            targetHost = self.getHostByID(hid)
+            migrateFromNum = len(self.scheduler.getMigrationFromHost(currentHostID, 
+                                                                     decision))
+            migrateToNum = len(self.scheduler.getMigrationToHost(hid, decision))
+            allocbw = min(targetHost.bwCap / migrateToNum, 
+                          currentHost.bwCap / migrateFromNum, 
+                          routerBwToEach)
+            
+            if targetHost.possibleToAddVm(vm):
+                migrationsSource.append(vid)
+                migrationDest.append(hid)
+                vm.allocateAndExecute(targetHost, allocbw)
+            
+        noMigrationVmIds, _ = self.addRunByEdges([migrationsSource, migrationDest])
+        for vmId in noMigrationVmIds:
+            vm = self.getVmByID(vmId)
+            vm.execute(0)
+        
+        return [migrationsSource, migrationDest]
+        
