@@ -1,5 +1,6 @@
 
 """
+TODO: ADD Graph representation with dynamic models and train steps in graph
 """
 import os, sys, stat
 
@@ -52,16 +53,15 @@ def initalizeEnvironment (environment, logger):
     newjobinfos = workload.generateNewJobs(env.interval)
     env.addJobsInit(newjobinfos)
     start = time()
-    instDecision = scheduler.instancePlacement(first_sch = True)
+    instDecision = scheduler.instancePlacement()
     firstSchedulingTime = time() - start
-    instAllocation = env.instanceAllocateInit(instDecision) 
+    instAllocation = env.instanceAllocate(instDecision) 
     env.addRunInEdges(instAllocation)
     
     start = time()
     vmDecision = scheduler.vmPlacement()
     secondSchedulingTime = time() - start
-    migration = env.vmAllocateInit(vmDecision)#TODO Vm execute
-    env.addRunByEdges(migration)
+    allocats = env.vmAllocateInit(vmDecision)#TODO Vm execute
     
     schedulingTime = firstSchedulingTime + secondSchedulingTime
     
@@ -77,12 +77,20 @@ def initalizeEnvironment (environment, logger):
 
 def stepSimulation (workload, scheduler, env):
     newjobinfos = workload.generateNewJobs(env.interval)
-    deployed, destroyed = env.addJobs(newcontainerinfos)ll#TODO trace, -deployed
+    destroyed = env.addJobs(newjobinfos)
     start = time()
-    decision = scheduler.filter_placement(scheduler.placement(deployed)) 
+    instDecision = scheduler.instancePlacement()
     firstSchedulingTime = time() - start
-    
-    
+    instAllocation = env.instanceAllocate(instDecision) 
+    env.addRunInEdges(instAllocation)
+
+    start = time()
+    vmDecision = scheduler.filter_placement(scheduler.vmPlacement()) 
+    secondSchedulingTime = time() - start
+    migrations = env.simulationStep(vmDecision)
+    schedulingTime = firstSchedulingTime + secondSchedulingTime
+
+    #TODOworkload.updateDeployedContainers(
     
     
     
