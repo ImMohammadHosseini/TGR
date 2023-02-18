@@ -22,19 +22,20 @@ class Scheduler():
         pass
 
     def filter_placement(self, decision):
-        filtered_decision = []
-        for cid, hid in decision:
-            if self.env.getContainerByID(cid).getHostID() != hid:
-                filtered_decision.append((cid, hid))
-        return filtered_decision
+        filteredDecisionSource = []; filteredDecisionDest = []
+        for vid, hid in zip(decision[0], decision[1]):
+            if self.env.getVmByID(vid).hostId != hid:
+                filteredDecisionSource.append(vid)
+                filteredDecisionDest.append(hid)
+        return [filteredDecisionSource, filteredDecisionDest]
 
     def getMigrationFromHost(self, hostID, decision):
-        containerIDs = []
-        for (cid, _) in decision:
-            hid = self.env.getContainerByID(cid).getHostID()
+        vmIDs = []
+        for vid in decision[0]:
+            hid = self.env.getVmByID(vid).hostID
             if hid == hostID:
-                containerIDs.append(cid)
-        return containerIDs
+                vmIDs.append(vid)
+        return vmIDs
 
     def getMigrationToHost(self, hostID, decision):
         vmIDs = []

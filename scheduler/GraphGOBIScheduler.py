@@ -56,9 +56,9 @@ class GraphGOBIScheduler(Scheduler):
                 
         return inits, ins_ids_init
     
-    def first_step (self, first_sch = False) :
+    def first_step (self) :
         #TODO add graphrepresentatio in learning process
-        if not first_sch: self.env.nodeUpdate()
+        #if not first_sch: self.env.nodeUpdate()
         schedueled_instances = self.env.graphData['instance', 'run_in', 'vm'].edge_index[0]
         _, vm_emb, instance_emb = self.graphRepre(self.env.graph_data)
         init, instance_ids_init = self.first_step_init(vm_emb, 
@@ -114,8 +114,8 @@ class GraphGOBIScheduler(Scheduler):
         return [decisionSource, decisionDest]
         
         
-    def instancePlacement (self, first_sch = False) :
-        decision = self.first_step(first_sch)
+    def instancePlacement (self) :
+        decision = self.first_step()
         return decision
     
     def vmPlacement (self):
