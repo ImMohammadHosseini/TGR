@@ -111,9 +111,9 @@ class VM ():
         return instance.diskMax
     
     def possibleToAddInstance (self, instance):
-        return (instance.cpuMax <= self.getExpectedFreeCores() and \
-                instance.memMax <= self.getExpectedFreeRam() and \
-                instance.diskMax <= self.getExpectedFreeDisk())
+        return (instance.cpuMax <= self.getFreeCores() and \
+                instance.memMax <= self.getFreeRam() and \
+                instance.diskMax <= self.getFreeDisk())
     
     def getVmSize (self):
         if self.lastVmSize == 0:
