@@ -27,13 +27,16 @@ class VM ():
     
     def getInstancesOfVm (self):
         graphData = self.datacenter.env.graphData
-        allEdges = graphData['instance', 'run_in', 'vm'].edge_inde
+        allEdges = graphData['instance', 'run_in', 'vm'].edge_index
         allEdges = allEdges.detach().numpy()
         instances = []
         for i, vid in enumerate(allEdges[1]):
             if vid == self.id:
                 instances.append(self.datacenter.env.getInstanceById(allEdges[0][i]))
         return instances
+    
+    def getInstanceForRun (self):
+        pass
     
     def getFreeCores (self):
         instances = self.getInstancesOfVm()
@@ -111,27 +114,28 @@ class VM ():
         return instance.diskMax
     
     def possibleToAddInstance (self, instance):
-        return (instance.cpuMax <= self.getFreeCores() and \
-                instance.memMax <= self.getFreeRam() and \
-                instance.diskMax <= self.getFreeDisk())
+        return (instance.cpuMax <= self.getExpectedFreeCores() and \
+                instance.memMax <= self.getExpectedFreeRam() and \
+                instance.diskMax <= self.getExpectedFreeDisk())
     
     def getVmSize (self):
         if self.lastVmSize == 0:
             self.lastVmSize = self.getRequestsRam()+self.getRequestsDisk()
         return self.lastVmSize
     
-    def allocate (self,host, allocBw):
+    def allocate (self, host, allocBw):
         lastMigrationTime = 0
-        if self.hostid != host.id:
-            lastMigrationTime += self.getContainerSize() / allocBw
-            lastMigrationTime += abs(self.env.getHostById(self.hostid).latency - host.latency)
+        if self.hostId != host.id:
+            lastMigrationTime += self.getVmSize() / allocBw
+            firstLatency = self.datacenter.env.getHostById(self.hostId).latency if self.hostId!=-1 else 0.076
+            lastMigrationTime += abs(firstLatency - host.latency)
         self.hostid = host.id
         return lastMigrationTime
     
     def execute (self, lastMigrationTime):
         assert self.hostid != -1
         self.totalMigrationTime += lastMigrationTime
-        execTime = self.env.intervaltime - lastMigrationTime
+        execTime = self.datacenter.env.intervaltime - lastMigrationTime
         #reqCore = self.getRequestsCore()
         instances = self.getInstancesOfVm()
         instance = instances[self.datacenter.env.interval % len(instances)]
