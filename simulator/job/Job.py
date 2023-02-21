@@ -12,7 +12,7 @@ class Job () :
         self.startAt = self.env.interval
         self.destroyAt = -1
         
-        for task in self.task_list:
+        for task in self.taskList:
             task.set_job(self)
             
         self.tasksId = []
@@ -34,47 +34,53 @@ class Job () :
     
     def jobGraphInfo (self, past_task_num, past_inst_num):
         past_task = past_task_num
-        x_task = [None] * len(self.task_list)
-        creasionId_task = [None] * len(self.task_list)
+        x_task = [None] * len(self.taskList)
+        creasionId_task = [None] * len(self.taskList)
+        x_instance = []
+        creationId_instance = []
         part_of_source = []
         part_of_dest = []
         source = []
         dest = []
-        sorted_task_list = [None] * len(self.task_list)
-        for task in self.task_list:
+        sorted_task_list = [None] * len(self.taskList)
+        for task in self.taskList:
             task.setGraphId(past_task)
             self.tasksId.append(task.graphId)
-            if task.task_name[:4] == "task" or task.task_name == 'MergeTask':
-                x_task[past_task - past_task_num] = [task.plan_cpu,
-                                                     task.plan_mem,
-                                                     len(task.instance_list),
+            if task.taskName[:4] == "task" or task.taskName == 'MergeTask':
+                x_task[past_task - past_task_num] = [task.planCpu,
+                                                     task.planMem,
+                                                     task.planDisk,
+                                                     len(task.instanceList),
                                                      task.status.value]
-                creasionId_task[past_task - past_task_num] = task.creatioId
+                creasionId_task[past_task - past_task_num] = task.creationId
                 sorted_task_list[past_task - past_task_num] = task
                 
-            elif '_' not in task.task_name:
-                x_task[int(task.task_name[1:])] = [task.plan_cpu,
-                                                   task.plan_mem,
-                                                   len(task.instance_list),
+            elif '_' not in task.taskName:
+                x_task[int(task.taskName[1:])-1] = [task.planCpu,
+                                                   task.planMem,
+                                                   task.planDisk,
+                                                   len(task.instanceList),
                                                    task.status.value]
-                creasionId_task[int(task.task_name[1:])] = task.creatioId
-                sorted_task_list[int(task.task_name[1:])] = task
+                creasionId_task[int(task.taskName[1:])-1] = task.creationId
+                sorted_task_list[int(task.taskName[1:])-1] = task
                 
             else:
-                edges = task.task_name.split('_')
-                x_task[int(edges[0][1:])] = [task.plan_cpu,
-                                             task.plan_mem,
-                                             len(task.instance_list),
+                edges = task.taskName.split('_')
+                x_task[int(edges[0][1:])-1] = [task.planCpu,
+                                             task.planMem,
+                                             task.planDisk,
+                                             len(task.instanceList),
                                              task.status.value]
-                creasionId_task[int(edges[0][1:])] = task.creatioId
-                sorted_task_list[int(edges[0][1:])] = task
-                dest.append(past_task_num+int(edges[0][1:]))
+                creasionId_task[int(edges[0][1:])-1] = task.creationId
+                sorted_task_list[int(edges[0][1:])-1] = task
                 for i in edges[1:]:
-                    source.append(past_task_num+int(i))
+                    source.append(past_task_num+int(i)-1)
+                    dest.append(past_task_num+int(edges[0][1:])-1)
                 
-                
-            x_instance, creationId_instance, part_of, \
+            x_instance_task, creationId_inst_task, part_of, \
                 past_inst_num=task.instanceGraph(past_task, past_inst_num)
+            x_instance += x_instance_task
+            creationId_instance += creationId_inst_task
             part_of_source += part_of[0]
             part_of_dest += part_of[1]
             past_task += 1

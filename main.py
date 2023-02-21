@@ -28,12 +28,12 @@ opts, args = parser.parse_args()
 
 
 NUM_SIM_STEPS = 100
-ARRIVALRATE = 10
+ARRIVALRATE = 5
 
-DATACENTERS = 2
+DATACENTERS = 3
 HOSTS = 10 #for each datacenter
 VMS = 20 # for each datacenter
-DATACENTERINFO = [(HOSTS, VMS), (HOSTS, VMS)]#TODO add geographic infos
+DATACENTERINFO = [(HOSTS, VMS), (HOSTS, VMS), (HOSTS, VMS)]#TODO add geographic infos
 TOTAL_POWER = 1000
 ROUTER_BW = 10000
 INTERVAL_TIME = 300 # seconds
@@ -46,18 +46,22 @@ if len(sys.argv) > 1:
 def initalizeEnvironment (environment, logger):
     
     workload = CDJB(ARRIVALRATE, 2)
-    scheduler = GraphGOBIScheduler('energy_latency_'+str(HOSTS)+'_'+str(VMS))
+    scheduler = GraphGOBIScheduler('energy_latency_'+str(DATACENTERS*HOSTS)+\
+                                   '_'+str(DATACENTERS*VMS))
     env = Simulator(DATACENTERS, HOSTS, VMS, TOTAL_POWER, ROUTER_BW, 
                     scheduler, INTERVAL_TIME, DATACENTERINFO)
     #TODO add state stats = Stats(env, workload, datacenter, scheduler)
-    newjobinfos = workload.generateNewJobs(env.interval)
+    newjobinfos = workload.generateNewJobs(env.interval, env)
     env.addJobsInit(newjobinfos)
     start = time()
     instDecision = scheduler.instancePlacement()
     firstSchedulingTime = time() - start
     instAllocation = env.instanceAllocate(instDecision) 
+    print(len(instAllocation[0]))
+    print(len(env.graphData['instance', 'run_in', 'vm'].edge_index[1]))
     env.addRunInEdges(instAllocation)
-    
+    print(len(env.graphData['instance', 'run_in', 'vm'].edge_index[1]))
+
     start = time()
     vmDecision = scheduler.vmPlacement()
     secondSchedulingTime = time() - start
@@ -66,9 +70,10 @@ def initalizeEnvironment (environment, logger):
     schedulingTime = firstSchedulingTime + secondSchedulingTime
     
     #TODOworkload.updateDeployedContainers(env.getCreationIDs(migrations, deployed)) 
-    print()
-    print()
-    print()
+    print("All jobs' IDs:", env.getjobIds())
+    print("Num Instances in vms {(vmId, numInstance)}:", env.getNumInstancsInVms())
+    print("VMs in host (vmId, hostId):", env.getVmsInHosts())
+    
     #TODOprintDecisionAndMigrations(decision, migrations)
 
     #TODOstats.saveStats()
@@ -76,7 +81,7 @@ def initalizeEnvironment (environment, logger):
     return workload, scheduler, env#, stats
 
 def stepSimulation (workload, scheduler, env):
-    newjobinfos = workload.generateNewJobs(env.interval)
+    newjobinfos = workload.generateNewJobs(env.interval, env)
     destroyed = env.addJobs(newjobinfos)
     start = time()
     instDecision = scheduler.instancePlacement()
@@ -92,8 +97,12 @@ def stepSimulation (workload, scheduler, env):
 
     #TODOworkload.updateDeployedContainers(
     
-    
-    
+    print("All jobs' IDs:", env.getjobIds())
+    print("Destroyed:", destroyed)
+    print("Num Instances in vms {(vmId, numInstance)}:", env.getNumInstancsInVms())
+    print("VMs in host (vmId, hostId):", env.getVmsInHosts())
+    #printDecisionAndMigrations(decision, migrations)
+    #TODOstats.saveStats()
     
 if __name__ == '__main__':
     env, mode = opts.env, int(opts.mode)

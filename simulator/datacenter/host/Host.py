@@ -24,7 +24,7 @@ class Host ():
     
     def getVmsOfHost (self):
         graphData = self.datacenter.env.graphData
-        allEdges = graphData['vm', 'run_by', 'host'].edge_inde
+        allEdges = graphData['vm', 'run_by', 'host'].edge_index
         allEdges = allEdges.detach().numpy()
         vms = []
         for i, hid in enumerate(allEdges[1]):
