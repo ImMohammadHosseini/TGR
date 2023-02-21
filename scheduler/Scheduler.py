@@ -24,7 +24,7 @@ class Scheduler():
     def filter_placement(self, decision):
         filteredDecisionSource = []; filteredDecisionDest = []
         for vid, hid in zip(decision[0], decision[1]):
-            if self.env.getVmByID(vid).hostId != hid:
+            if self.env.getVmById(vid).hostId != hid:
                 filteredDecisionSource.append(vid)
                 filteredDecisionDest.append(hid)
         return [filteredDecisionSource, filteredDecisionDest]
@@ -32,7 +32,7 @@ class Scheduler():
     def getMigrationFromHost(self, hostID, decision):
         vmIDs = []
         for vid in decision[0]:
-            hid = self.env.getVmByID(vid).hostID
+            hid = self.env.getVmById(vid).hostId
             if hid == hostID:
                 vmIDs.append(vid)
         return vmIDs
