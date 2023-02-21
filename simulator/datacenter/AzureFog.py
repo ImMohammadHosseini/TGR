@@ -11,25 +11,25 @@ class AzureFog():
         self.host_types = {
 			'small':
 				{
-                    'core': 200,
-					'mem_size': .4,
-					'DiskSize': 16000,
+                    'core': 16,
+					'mem_size': 8000,
+					'DiskSize': 128000,
 					'Bw': 5000,
 					'Power': 'PMB2s'
 				},
 			'medium':
 				{
-                    'core': 400,
-                    'mem_size': .8,
-					'DiskSize': 32000,
+                    'core': 32,
+                    'mem_size': 32000,
+					'DiskSize': 256000,
 					'Bw': 5000,
 					'Power': 'PMB4ms'
 				},
 			'large':
 				{
-                    'core': 800,
-                    'mem_size': 1.8,
-					'DiskSize': 64000,
+                    'core': 64,
+                    'mem_size': 64000,
+					'DiskSize': 512000,
 					'Bw': 5000,
 					'Power': 'PMB8ms'
 				}
@@ -40,30 +40,30 @@ class AzureFog():
         self.vm_types = {
 			'Extra-small':
 				{
-                    'core': 100,
-                    'RAM': 768,
-                    'Disk': 4000,
-					'Bw': 2000
+                    'core': 4,
+                    'RAM': 8000,
+                    'Disk': 32000,
+					'Bw': 4000
 				},
             'small':
                 {
-                    'core': 100,
-                    'RAM':1750,
-                    'Disk': 8000,
-					'Bw': 2000
+                    'core': 8,
+                    'RAM': 16000,
+                    'Disk': 64000,
+					'Bw': 4000
                 },
             'medium':
                 {
-                    'core': 200,
-                    'RAM':3500,
-                    'Disk': 16000,
+                    'core': 16,
+                    'RAM': 16000,
+                    'Disk': 64000,
 					'Bw': 4000
                 },
             'large':
                 {
-                    'core': 400,
-                    'RAM':7000,
-                    'Disk': 32000,
+                    'core': 32,
+                    'RAM': 32000,
+                    'Disk': 128000,
 					'Bw': 4000
                 },
         }

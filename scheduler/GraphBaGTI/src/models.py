@@ -5,16 +5,15 @@
 
 import torch.nn as nn
 from sys import argv
-from constants import Coeff_Energy, Coeff_Latency
-#TODO class complement
+from .constants import Coeff_Energy, Coeff_Latency
 
-class energy_latency_20_40_first (nn.Module):
+class energy_latency_30_60_first (nn.Module):
     def __init__(self,
                  node_dim : int = 5):
-        super(energy_latency_20_40_first, self).__init__()
-        self.name = "energy_latency_20_40_first"
+        super(energy_latency_30_60_first, self).__init__()
+        self.name = "energy_latency_30_60_first"
         self.find = nn.Sequential(
-            nn.Linear(40*(40 + 2*node_dim), 512),
+            nn.Linear(60*(60 + 2*node_dim), 512),
             nn.Softplus(),
             nn.Linear(512, 256),
             nn.Softplus(),
@@ -34,13 +33,13 @@ class energy_latency_20_40_first (nn.Module):
         return xlayers
     
 
-class energy_latency_20_40_second (nn.Module):
+class energy_latency_30_60_second (nn.Module):
     def __init__(self,
                  node_dim : int = 5):
-        super(energy_latency_20_40_second, self).__init__()
-        self.name = "energy_latency_20_40_second"
+        super(energy_latency_30_60_second, self).__init__()
+        self.name = "energy_latency_30_60_second"
         self.find = nn.Sequential(
-            nn.Linear(20*(20 + 2*node_dim), 512),
+            nn.Linear(30*(30 + 2*node_dim), 512),
             nn.Softplus(),
             nn.Linear(512, 256),
             nn.Softplus(),

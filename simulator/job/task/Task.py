@@ -14,10 +14,10 @@ class Status(Enum):
     
     
 class Task () :
-    def __init__ (self, taskName, creaisionId, planCpu, planMem, planDisk,
+    def __init__ (self, taskName, creationId, planCpu, planMem, planDisk,
                   instanceList, graphId = -1) :
         
-        self.creationId = creaisionId
+        self.creationId = creationId
         self.graphId = graphId
         self.job = None
         self.taskName = taskName
@@ -29,12 +29,13 @@ class Task () :
         self.instance_num = len(instanceList)
         self.destroyAt = -1
         
-        if self.task_name[:4] == "task" or self.task_name == 'MergeTask' or \
+        '''if self.task_name[:4] == "task" or self.task_name == 'MergeTask' or \
             '_' not in self.task_name:
             self.status = Status.READY
-        else: self.status = Status.WAITING
+        else: self.status = Status.WAITING'''
+        self.status = Status.READY
         
-        for instance in self.instance_list:
+        for instance in self.instanceList:
             instance.task = self
         
         self.instancesId = []
@@ -66,19 +67,19 @@ class Task () :
         
     def set_job (self, job):
         self.job = job
-        for instance in self.instance_list:
+        for instance in self.instanceList:
             instance.job = job
             
     def instanceGraph (self, past_task_num, past_inst_num) :
         past_inst = past_inst_num
         x_inst = []; creationId_instance = []
         source = []; dest = []
-        for instance in self.instance_list:
-            instance.setCreationId(past_inst)
+        for instance in self.instanceList:
+            instance.setGraphId(past_inst)
             self.instancesId.append(instance.graphId)
             self.job.instancesId.append(instance.graphId)
-            x_inst.append([instance.seq_no, instance.total_seq_no,
-                          instance.cpu_max, instance.mem_max])
+            x_inst.append([instance.duration, instance.completDu,
+                          instance.cpuMax, instance.memMax, instance.diskMax])
             creationId_instance.append(instance.creationId)
             
             source.append(past_task_num)
@@ -86,7 +87,7 @@ class Task () :
             past_inst += 1
         return x_inst, creationId_instance, [source, dest], past_inst
  
-    def destroy (self, instanceId):
+    def destroy (self):
         self.destroyAt = self.job.env.interval
         self.destroyTaskNode()
     

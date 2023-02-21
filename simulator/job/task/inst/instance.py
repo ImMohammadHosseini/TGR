@@ -10,7 +10,7 @@ class Instance ():
     def __init__ (self, creationId, duration, cpuAvg, cpuMax, memAvg, memMax, 
                   diskMax, graphId = -1, vmId = -1) :
         
-        self.creationId
+        self.creationId = creationId
         self.graphId = graphId
         self.task=None
         self.job=None
@@ -35,7 +35,7 @@ class Instance ():
         return graphId
         
     def requiredExecTime (self):
-        return self.duration - self.completDu
+        return min(0, self.duration - self.completDu)
     
     def getVmId (self):
         return self.vmId
@@ -45,6 +45,10 @@ class Instance ():
     
     def destroy (self):
         self.destroyAt = self.job.env.interval
+        vm = self.job.env.getVmById(self.vmId)
+        vm.addExpectedFreeCores(self.cpuAvg)
+        vm.addExpectedFreeRam(self.memAvg)
+        vm.addExpectedFreeDisk(self.diskMax)
         self.vmId = -1
         self.destroyInstanceNode()
         

@@ -43,17 +43,18 @@ class Simulator () :
         self.graphData['instance'].x = torch.tensor([])
         self.graphData['instance'].creationIds = torch.tensor([])
         
-        self.graphData['datacenter', 'dsho', 'host'] = torch.tensor([[],[]])
+        self.graphData['datacenter', 'dsho', 'host'].edge_index = torch.tensor(
+                                                                        [[],[]]).long()
         self.graphData['datacenter', 'dsvm', 'vm'].edge_index = torch.tensor(
-                                                                        [[],[]])
+                                                                        [[],[]]).long()
         self.graphData['vm', 'run_by', 'host'].edge_index = torch.tensor(
-                                                                        [[], []])
+                                                                        [[], []]).long()
         self.graphData['task', 'depend', 'task'].edge_index = torch.tensor(
-                                                                        [[], []])
+                                                                        [[], []]).long()
         self.graphData['task', 'part_of', 'instance'].edge_index = torch.tensor(
-                                                                        [[], []])
+                                                                        [[], []]).long()
         self.graphData['instance', 'run_in', 'vm'].edge_index = torch.tensor(
-                                                                        [[], []])
+                                                                        [[], []]).long()
         
     def addDatacenterListInit (self, datacenterlist) :
         assert len(datacenterlist) == self.datacenterlimit
@@ -80,13 +81,17 @@ class Simulator () :
             dsho_source_node += dsho[0]; dsho_dest_node += dsho[1]
             dsvm_source_node += dsvm[0]; dsvm_dest_node += dsvm[1]
             
-        self.graphData['datacenter'].x = torch.tensor(x_datacenter)
-        self.graphData['host'].x = torch.tensor(x_host)
-        self.graphData['vm'].x = torch.tensor(x_vm)
+        self.graphData['datacenter'].x = torch.tensor(x_datacenter).float()
+        self.graphData['host'].x = torch.tensor(x_host).float()
+        self.graphData['vm'].x = torch.tensor(x_vm).float()
         self.graphData['datacenter', 'dsho', 'host'].edge_index = torch.tensor(
                                             [dsho_source_node, dsho_dest_node])
+        self.graphData['host', 'hods', 'datacenter'].edge_index = torch.tensor(
+                                            [dsho_dest_node, dsho_source_node])
         self.graphData['datacenter', 'dsvm', 'vm'].edge_index = torch.tensor(
                                             [dsvm_source_node, dsvm_dest_node])
+        self.graphData['vm', 'vmds', 'datacenter'].edge_index = torch.tensor(
+                                            [dsvm_dest_node, dsvm_source_node])
     
     def destroyCompletedJobs (self):
         remainJobs = []; destroyed = []
@@ -96,7 +101,7 @@ class Simulator () :
                 remainJobs.append(job)
             else:
                 job.destroy()
-                destroyed.append(job)
+                destroyed.append(job.job_id)
         self.jobList = remainJobs
         self.completedJobs += destroyed
         return destroyed
@@ -134,23 +139,23 @@ class Simulator () :
                                               torch.tensor(x_task)))
         self.graphData['task'].creationIds = torch.cat((self.graphData['task'].creationIds, 
                                                         torch.tensor(cid_task)))
-        
         self.graphData['instance'].x = torch.cat((self.graphData['instance'].x, 
                                                   torch.tensor(x_instance)))
         self.graphData['instance'].creationIds = torch.cat((self.graphData['instance'].creationIds, 
                                                             torch.tensor(cid_instance)))
         
+        
         self.graphData['task', 'depend', 'task'].edge_index = torch.cat((
             self.graphData['task', 'depend', 'task'].edge_index, 
-            torch.tensor([depend_source_node, depend_dest_node])), dim = 1)
+            torch.tensor([depend_source_node, depend_dest_node])), dim = 1).long()
         self.graphData['task', 'part_of', 'instance'].edge_index = torch.cat((
             self.graphData['task', 'part_of', 'instance'].edge_index, 
-            torch.tensor([part_of_source_node, part_of_dest_node])), dim = 1)
+            torch.tensor([part_of_source_node, part_of_dest_node])), dim = 1).long()
 
     def addRunInEdges (self, allocatedInstances):
         self.graphData['instance', 'run_in', 'vm'].edge_index = torch.cat((
             self.graphData['instance', 'run_in', 'vm'].edge_index,
-            torch.tensor(allocatedInstances)), dim = 1)
+            torch.tensor(allocatedInstances)), dim = 1).long()
 
     def addRunByEdges (self, migrations):
         source = self.graphData['vm', 'run_by', 'host'].edge_index[0]
@@ -166,7 +171,7 @@ class Simulator () :
         all_dest = list(dest) + migrations[1]
         
         self.graphData['vm', 'run_by', 'host'].edge_index=torch.tensor([all_source, 
-                                                                        all_dest])
+                                                                        all_dest]).long()
         
         return source, dest
     
@@ -175,18 +180,22 @@ class Simulator () :
         
     def getInstancsInVms (self):
         edges = self.graphData['instance', 'run_in', 'vm'].edge_index
-        return [(instId, vmId) for instId, vmId in zip(edges[0],edges[1])]
+        return [(int(instId), int(vmId)) for instId, vmId in zip(edges[0],edges[1])]
+    
+    def getNumInstancsInVms (self):
+        numVms = len(self.graphData['vm'].x)
+        return {i:len(self.getVmById(i).getInstancesOfVm())for i in range(numVms)}
     
     def getVmsInHosts (self):
         edges = self.graphData['vm', 'run_by', 'host'].edge_index
-        return [(vmId, hostId) for vmId, hostId in zip(edges[0],edges[1])]
+        return [(int(vmId), int(hostId)) for vmId, hostId in zip(edges[0],edges[1])]
     
     def getInstanceById (self, instanceId):
         for job in self.jobList:
             if instanceId in job.instancesId:
-                for task in job.task_list:
+                for task in job.taskList:
                     if instanceId in task.instancesId:
-                        for instance in task.instance_list:
+                        for instance in task.instanceList:
                             if instance.getGraphId() == instanceId:
                                 return instance
                             
@@ -207,6 +216,7 @@ class Simulator () :
     def instanceAllocate (self, decision):
         #add a instance in vm based on the decision if its possible
         allocate_source = []; allocate_dest = []
+        print(len(decision[0]))
         #routerBwToEach = self.totalbw / len(decision[0])
         for instanceId, vmId in zip(decision[0], decision[1]):
             instance = self.getInstanceById(instanceId)
@@ -220,16 +230,22 @@ class Simulator () :
                 allocate_source.append(instanceId)
                 allocate_dest.append(vmId)
                 instance.vmId = vmId
-                
+                vm.removeExpectedFreeCores(instance.cpuAvg)
+                vm.removeExpectedFreeRam(instance.memAvg)
+                vm.removeExpectedFreeDisk(instance.diskMax)
+        #TODO check possibletoaddinstance
+        print(len(allocate_source))
         return [allocate_source, allocate_dest]
     
     def vmAllocateInit (self, decision):
         allocate_source = []; allocate_dest = []
         routerBwToEach = self.totalbw / len(decision[0])
+        #for vmId in decision[0]:
+        #    print(len(self.getVmById(vmId).getInstancesOfVm()))
         for vmId, hostId in zip(decision[0], decision[1]):
             vm = self.getVmById(vmId)
             host = self.getHostById(hostId)
-            assert vm.HostId == -1
+            assert vm.hostId == -1
             numberAllocToHost = len(self.scheduler.getMigrationToHost(hostId,
                                                                       decision))
             allocbw = min(host.bwCap/ numberAllocToHost, routerBwToEach)
@@ -248,16 +264,20 @@ class Simulator () :
             else self.totalbw
         migrationsSource = []; migrationDest = []    
         for vid, hid in zip(decision[0], decision[1]):
-            vm = self.getVmByID(vid)
-            currentHostID = vm.getHostID()
-            currentHost = self.getHostByID(currentHostID)
-            targetHost = self.getHostByID(hid)
+            vm = self.getVmById(vid)
+            currentHostID = vm.hostId
+            currentHost = self.getHostById(currentHostID)
+            targetHost = self.getHostById(hid)
             migrateFromNum = len(self.scheduler.getMigrationFromHost(currentHostID, 
                                                                      decision))
             migrateToNum = len(self.scheduler.getMigrationToHost(hid, decision))
-            allocbw = min(targetHost.bwCap / migrateToNum, 
-                          currentHost.bwCap / migrateFromNum, 
-                          routerBwToEach)
+            if currentHostID != -1:
+                allocbw = min(targetHost.bwCap / migrateToNum, 
+                              currentHost.bwCap / migrateFromNum, 
+                              routerBwToEach)
+            else:
+                allocbw = min(targetHost.bwCap/ migrateToNum, routerBwToEach)
+
             
             if targetHost.possibleToAddVm(vm):
                 migrationsSource.append(vid)
