@@ -76,8 +76,8 @@ class Task () :
         source = []; dest = []
         for instance in self.instanceList:
             instance.setGraphId(past_inst)
-            self.instancesId.append(instance.graphId)
-            self.job.instancesId.append(instance.graphId)
+            self.instancesId.append(instance.creationId)
+            self.job.instancesId.append(instance.creationId)
             x_inst.append([instance.duration, instance.completDu,
                           instance.cpuMax, instance.memMax, instance.diskMax])
             creationId_instance.append(instance.creationId)
