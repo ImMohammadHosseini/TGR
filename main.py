@@ -57,10 +57,7 @@ def initalizeEnvironment (environment, logger):
     instDecision = scheduler.instancePlacement()
     firstSchedulingTime = time() - start
     instAllocation = env.instanceAllocate(instDecision) 
-    print(len(instAllocation[0]))
-    print(len(env.graphData['instance', 'run_in', 'vm'].edge_index[1]))
     env.addRunInEdges(instAllocation)
-    print(len(env.graphData['instance', 'run_in', 'vm'].edge_index[1]))
 
     start = time()
     vmDecision = scheduler.vmPlacement()
@@ -83,6 +80,7 @@ def initalizeEnvironment (environment, logger):
 def stepSimulation (workload, scheduler, env):
     newjobinfos = workload.generateNewJobs(env.interval, env)
     destroyed = env.addJobs(newjobinfos)
+    env.returnCompleteVm()
     start = time()
     instDecision = scheduler.instancePlacement()
     firstSchedulingTime = time() - start

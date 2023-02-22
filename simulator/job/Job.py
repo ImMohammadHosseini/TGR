@@ -45,7 +45,7 @@ class Job () :
         sorted_task_list = [None] * len(self.taskList)
         for task in self.taskList:
             task.setGraphId(past_task)
-            self.tasksId.append(task.graphId)
+            self.tasksId.append(task.creationId)
             if task.taskName[:4] == "task" or task.taskName == 'MergeTask':
                 x_task[past_task - past_task_num] = [task.planCpu,
                                                      task.planMem,

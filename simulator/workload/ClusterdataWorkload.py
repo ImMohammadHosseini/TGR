@@ -67,6 +67,7 @@ class CDJB (Workload) :
                 for k, instance_info in tasks_instances.iterrows():
                     instance_name = instance_info[0]
                     duration = instance_info[6] - instance_info[5]
+                    duration = duration if duration != 0 else 1
                     #seq_no = instance_info[8]
                     #total_seq_no = instance_info[9]
                     cpu_avg = instance_info[10]/100

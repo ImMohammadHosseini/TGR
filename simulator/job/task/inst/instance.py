@@ -35,20 +35,18 @@ class Instance ():
         return graphId
         
     def requiredExecTime (self):
-        return min(0, self.duration - self.completDu)
+        return max(0, self.duration - self.completDu)
     
     def getVmId (self):
         return self.vmId
     
     def getVm (self):
-        return self.job.env.getVmByID(self.vmId)
+        return self.job.env.getVmById(self.vmId)
     
     def destroy (self):
         self.destroyAt = self.job.env.interval
-        vm = self.job.env.getVmById(self.vmId)
-        vm.addExpectedFreeCores(self.cpuAvg)
-        vm.addExpectedFreeRam(self.memAvg)
-        vm.addExpectedFreeDisk(self.diskMax)
+        vm = self.getVm()
+        vm.deleteInstance(self.creationId)
         self.vmId = -1
         self.destroyInstanceNode()
         

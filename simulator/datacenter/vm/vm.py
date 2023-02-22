@@ -2,6 +2,7 @@
 """
 
 """
+import pandas as pd
 
 class VM ():
     def __init__(self, coreLim, ramLim, diskLim, bwLim, datacenter, 
@@ -17,6 +18,9 @@ class VM ():
         self.expectedRamCap = self.ramCap
         self.expectedDiskCap = self.diskCap
         
+        self.instances = pd.DataFrame({'creationId':[], 'core':[], 'ram':[], 
+                                       'disk':[]})
+        
         self.datacenter = datacenter
         self.hostId = hostId
         
@@ -26,24 +30,24 @@ class VM ():
         self.lastVmSize = 0
     
     def getInstancesOfVm (self):
-        graphData = self.datacenter.env.graphData
-        allEdges = graphData['instance', 'run_in', 'vm'].edge_index
-        allEdges = allEdges.detach().numpy()
-        instances = []
-        for i, vid in enumerate(allEdges[1]):
-            if vid == self.id:
-                instances.append(self.datacenter.env.getInstanceById(allEdges[0][i]))
-        return instances
+        return self.instances['creationId'].to_list()
     
+    def addInstance (self, instCreationId, instCore, instRam, instDisk):
+        indx = 0 if pd.isnull(self.instances.index.max()) else self.instances.index.max() + 1
+        self.instances.loc[indx]=[instCreationId, instCore, instRam, instDisk]
+        self.removeExpectedFreeCores(instCore)
+        self.removeExpectedFreeRam(instRam)
+        self.removeExpectedFreeDisk(instDisk)
+    
+    def deleteInstance (self, instCreationId):
+        indx = self.instances[(self.instances.creationId==instCreationId)].index
+        self.addExpectedFreeCores(self.instances['core'][indx[0]])
+        self.addExpectedFreeRam(self.instances['ram'][indx[0]])
+        self.addExpectedFreeDisk(self.instances['disk'][indx[0]])
+        self.instances = self.instances.drop(indx)
+        
     def getInstanceForRun (self):
         pass
-    
-    def getFreeCores (self):
-        instances = self.getInstancesOfVm()
-        usedCore = 0
-        for instance in instances:
-            usedCore += instance.cpuAvg
-        return self.coreNum - usedCore
     
     def getExpectedFreeCores (self):
         return self.expectedCoreNum
@@ -58,18 +62,11 @@ class VM ():
         self.expectedCoreNum = max(0, expectedCores)
     
     def getRequestsCore (self):
-        #TODO use first instance for run but we can send them by DAG
-        instances = self.getInstancesOfVm()
-        instance = instances[self.datacenter.env.interval % len(instances)]
-        return instance.cpuAvg
-    
-    def getFreeRam (self):
-        instances = self.getInstancesOfVm()
-        usedRam = 0
-        for instance in instances:
-            usedRam += instance.ramAvg
-        return self.ramCap - usedRam
-    
+        try:
+            return max(self.instances['core'].to_list())
+        except:
+            print('rid',self.id)
+        
     def getExpectedFreeRam (self):
         return self.expectedRamCap
     
@@ -83,17 +80,7 @@ class VM ():
         self.expectedRamCap = max(0, expectedRam)
         
     def getRequestsRam (self):
-        #TODO use first instance for run but we can send them by DAG
-        instances = self.getInstancesOfVm()
-        instance = instances[self.datacenter.env.interval % len(instances)]
-        return instance.memAvg
-    
-    def getFreeDisk (self):
-        instances = self.getInstancesOfVm()
-        usedDisk = 0
-        for instance in instances:
-            usedDisk += instance.diskMax
-        return self.diskCap - usedDisk
+        return max(self.instances['ram'].to_list())
     
     def getExpectedFreeDisk (self):
         return self.expectedDiskCap
@@ -101,18 +88,15 @@ class VM ():
     def addExpectedFreeDisk (self, diskToAdd):
         self.setExpectedFreeDisk(self.expectedDiskCap - diskToAdd)
         
-    def removeExpectedFreeDIsk (self, diskToRemove):
+    def removeExpectedFreeDisk (self, diskToRemove):
         self.setExpectedFreeDisk(self.expectedDiskCap - diskToRemove)
     
     def setExpectedFreeDisk (self, expectedDisk):
         self.expectedDiskCap = max(0, expectedDisk)
         
     def getRequestsDisk (self):
-        #TODO use first instance for run but we can send them by DAG
-        instances = self.getInstancesOfVm()
-        instance = instances[self.datacenter.env.interval % len(instances)]
-        return instance.diskMax
-    
+        return max(self.instances['disk'].to_list())
+
     def possibleToAddInstance (self, instance):
         return (instance.cpuMax <= self.getExpectedFreeCores() and \
                 instance.memMax <= self.getExpectedFreeRam() and \
@@ -129,19 +113,22 @@ class VM ():
             lastMigrationTime += self.getVmSize() / allocBw
             firstLatency = self.datacenter.env.getHostById(self.hostId).latency if self.hostId!=-1 else 0.076
             lastMigrationTime += abs(firstLatency - host.latency)
-        self.hostid = host.id
+        self.hostId = host.id
         return lastMigrationTime
     
     def execute (self, lastMigrationTime):
-        assert self.hostid != -1
+        assert self.hostId != -1
         self.totalMigrationTime += lastMigrationTime
         execTime = self.datacenter.env.intervaltime - lastMigrationTime
-        #reqCore = self.getRequestsCore()
-        instances = self.getInstancesOfVm()
-        instance = instances[self.datacenter.env.interval % len(instances)]
-        requiredExecTime = instance.requiredExecTime()
-        self.totalExecTime += min(execTime, requiredExecTime)
-        instance.completDu += min(execTime, requiredExecTime)
+        #TODO change for loop for get best instance line
+        for instanceCreationId in self.instances['creationId']:
+            instance = self.datacenter.env.getInstanceById(instanceCreationId)
+            requiredExecTime = instance.requiredExecTime()
+            self.totalExecTime += min(execTime, requiredExecTime)
+            execTime -= min(execTime, requiredExecTime)
+            instance.completDu += min(execTime, requiredExecTime)
+            if execTime == 0:
+                break
         
     def allocateAndExecute (self, host, allocBw) :
         self.execute(self.allocate(host, allocBw))
