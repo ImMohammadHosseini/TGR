@@ -93,6 +93,20 @@ class Simulator () :
         self.graphData['vm', 'vmds', 'datacenter'].edge_index = torch.tensor(
                                             [dsvm_dest_node, dsvm_source_node])
     
+    def returnCompleteVm (self):
+        allEdges = self.graphData['vm', 'run_by', 'host'].edge_index
+        edge0 = allEdges[0].detach().numpy()
+        edge1 = allEdges[1].detach().numpy()
+        for ds in self.datacenterlist:
+            for vm in ds.VMList:
+                if len(vm.getInstancesOfVm()) == 0 and vm.hostId != -1:
+                    vm.hostId = -1
+                    indx = np.where(edge0 == vm.id)
+                    edge0 = np.delete(edge0, indx)
+                    edge1 = np.delete(edge1, indx)
+        self.graphData['vm', 'run_by', 'host'].edge_index =  \
+            torch.tensor([edge0, edge1]) 
+        
     def destroyCompletedJobs (self):
         remainJobs = []; destroyed = []
         for job in self.jobList:
@@ -190,13 +204,13 @@ class Simulator () :
         edges = self.graphData['vm', 'run_by', 'host'].edge_index
         return [(int(vmId), int(hostId)) for vmId, hostId in zip(edges[0],edges[1])]
     
-    def getInstanceById (self, instanceId):
+    def getInstanceById (self, creationId):
         for job in self.jobList:
-            if instanceId in job.instancesId:
+            if creationId in job.instancesId:
                 for task in job.taskList:
-                    if instanceId in task.instancesId:
+                    if creationId in task.instancesId:
                         for instance in task.instanceList:
-                            if instance.getGraphId() == instanceId:
+                            if instance.creationId == creationId:
                                 return instance
                             
     def getVmById (self, vmId):
@@ -216,10 +230,10 @@ class Simulator () :
     def instanceAllocate (self, decision):
         #add a instance in vm based on the decision if its possible
         allocate_source = []; allocate_dest = []
-        print(len(decision[0]))
         #routerBwToEach = self.totalbw / len(decision[0])
         for instanceId, vmId in zip(decision[0], decision[1]):
-            instance = self.getInstanceById(instanceId)
+            instanceCreaionId = int(self.graphData['instance'].creationIds[instanceId])
+            instance = self.getInstanceById(instanceCreaionId)
             vm = self.getVmById(vmId)
             assert instance.vmId == -1
             #numberAllocToVm = len(self.scheduler.getAllocateToVm(vmId,
@@ -230,11 +244,9 @@ class Simulator () :
                 allocate_source.append(instanceId)
                 allocate_dest.append(vmId)
                 instance.vmId = vmId
-                vm.removeExpectedFreeCores(instance.cpuAvg)
-                vm.removeExpectedFreeRam(instance.memAvg)
-                vm.removeExpectedFreeDisk(instance.diskMax)
-        #TODO check possibletoaddinstance
-        print(len(allocate_source))
+                vm.addInstance(self.graphData['instance'].creationIds[instanceId],
+                    instance.cpuAvg, instance.memAvg, instance.diskMax)
+                
         return [allocate_source, allocate_dest]
     
     def vmAllocateInit (self, decision):
@@ -286,7 +298,7 @@ class Simulator () :
             
         noMigrationVmIds, _ = self.addRunByEdges([migrationsSource, migrationDest])
         for vmId in noMigrationVmIds:
-            vm = self.getVmByID(vmId)
+            vm = self.getVmById(vmId)
             vm.execute(0)
         
         return [migrationsSource, migrationDest]
