@@ -17,8 +17,10 @@ from .GraphBaGTI.src.opt import opt
 
 
 class GraphGOBIScheduler(Scheduler):
-    def __init__ (self, data_type) :
-        self.graphRepre = GNNEncoder ()
+    def __init__ (self, data_type,
+                  emb_dim : int = 5) :
+        self.emb_dim = emb_dim
+        self.graphRepre = GNNEncoder (emb_dim=emb_dim)
         self.model1 = eval(data_type+"_first()")
         self.model2 = eval(data_type+"_second()")
         self.data_type = data_type
@@ -90,7 +92,18 @@ class GraphGOBIScheduler(Scheduler):
                 oneHot[np.random.randint(0,len(host_emb))] = 1
                 oneHots.append(oneHot)
                 if len(vm_prep) == len(host_emb):
-                    print('hi')
+                    two_emb = np.concatenate((host_emb, vm_prep), axis=1)
+                    inits.append(np.concatenate((two_emb, oneHots), axis=1))
+                    vm_ids_init.append(vm_id_init)
+                    vm_id_init=[]; vm_prep = []; oneHots = []
+                elif i == len(vm_emb)-1:
+                    remain = len(host_emb) - len (vm_prep)
+                    for j in range(remain):
+                        vm_id_init.append(None)
+                        vm_prep.append([0]*self.emb_dim)
+                        oneHot = [0] * len(host_emb)
+                        oneHot[np.random.randint(0,len(host_emb))] = 1
+                        oneHots.append(oneHot)
                     two_emb = np.concatenate((host_emb, vm_prep), axis=1)
                     inits.append(np.concatenate((two_emb, oneHots), axis=1))
                     vm_ids_init.append(vm_id_init)
@@ -103,12 +116,13 @@ class GraphGOBIScheduler(Scheduler):
         host_emb, vm_emb, _ = self.graphRepre(self.env.graphData)
         init, vm_ids_init = self.second_step_init(host_emb, vm_emb)
         init = torch.tensor(init, dtype=torch.float, requires_grad=True)
-        result, iteration, fitness = opt(init, self.model2, 
-                                         int(self.data_type.split('_')[-2]))
+        result, _, _= opt(init, self.model2, int(self.data_type.split('_')[-2]))
         
         decisionSource = []; decisionDest = []
         for partsId, part in zip(vm_ids_init, result):
             for vmId, decision in zip(partsId, part):
+                if vmId == None:
+                    break
                 decisionSource.append(vmId)
                 decision = decision[-self.hosts:].tolist()
                 decisionDest.append(decision.index(max(decision)))
