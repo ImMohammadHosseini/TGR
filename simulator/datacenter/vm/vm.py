@@ -53,7 +53,7 @@ class VM ():
         return self.expectedCoreNum
     
     def addExpectedFreeCores (self, coreToAdd):
-        self.setExpectedFreeCores(self.expectedCoreNum - coreToAdd)
+        self.setExpectedFreeCores(self.expectedCoreNum + coreToAdd)
         
     def removeExpectedFreeCores (self, coreToRemove):
         self.setExpectedFreeCores(self.expectedCoreNum - coreToRemove)
@@ -68,7 +68,7 @@ class VM ():
         return self.expectedRamCap
     
     def addExpectedFreeRam (self, ramToAdd):
-        self.setExpectedFreeRam (self.expectedRamCap - ramToAdd)
+        self.setExpectedFreeRam (self.expectedRamCap + ramToAdd)
         
     def removeExpectedFreeRam (self, ramToRemove):
         self.setExpectedFreeRam (self.expectedRamCap - ramToRemove)
@@ -83,7 +83,7 @@ class VM ():
         return self.expectedDiskCap
     
     def addExpectedFreeDisk (self, diskToAdd):
-        self.setExpectedFreeDisk(self.expectedDiskCap - diskToAdd)
+        self.setExpectedFreeDisk(self.expectedDiskCap + diskToAdd)
         
     def removeExpectedFreeDisk (self, diskToRemove):
         self.setExpectedFreeDisk(self.expectedDiskCap - diskToRemove)
