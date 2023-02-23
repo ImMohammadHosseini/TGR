@@ -68,6 +68,7 @@ def initalizeEnvironment (environment, logger):
     
     #TODOworkload.updateDeployedContainers(env.getCreationIDs(migrations, deployed)) 
     print("All jobs' IDs:", env.getjobIds())
+    print("num instances:", env.getNumInstances())
     print("Num Instances in vms {(vmId, numInstance)}:", env.getNumInstancsInVms())
     print("VMs in host (vmId, hostId):", env.getVmsInHosts())
     
@@ -96,6 +97,7 @@ def stepSimulation (workload, scheduler, env):
     #TODOworkload.updateDeployedContainers(
     
     print("All jobs' IDs:", env.getjobIds())
+    print("num instances:", env.getNumInstances())
     print("Destroyed:", destroyed)
     print("Num Instances in vms {(vmId, numInstance)}:", env.getNumInstancsInVms())
     print("VMs in host (vmId, hostId):", env.getVmsInHosts())

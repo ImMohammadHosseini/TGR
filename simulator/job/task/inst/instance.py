@@ -15,7 +15,7 @@ class Instance ():
         self.task=None
         self.job=None
         self.duration = duration
-        self.completDu = 0
+        self.completDuration = 0
         self.cpuAvg = cpuAvg
         self.cpuMax = cpuMax
         self.memAvg = memAvg
@@ -25,6 +25,12 @@ class Instance ():
     
     def setGraphId (self, id):
         self.graphId = id
+    
+    def addCompleteDuration (self, completePart):
+        self.completDuration += completePart
+        if self.requiredExecTime() == 0:
+            self.destroy()
+            self.task.addCompleteInstance(self)
         
     def getGraphId (self):
         creationIds = self.job.env.graphData['instance'].creationIds.detach().numpy()
@@ -35,7 +41,7 @@ class Instance ():
         return graphId
         
     def requiredExecTime (self):
-        return max(0, self.duration - self.completDu)
+        return max(0, self.duration - self.completDuration)
     
     def getVmId (self):
         return self.vmId

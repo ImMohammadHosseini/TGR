@@ -116,7 +116,9 @@ class GraphGOBIScheduler(Scheduler):
         host_emb, vm_emb, _ = self.graphRepre(self.env.graphData)
         init, vm_ids_init = self.second_step_init(host_emb, vm_emb)
         init = torch.tensor(init, dtype=torch.float, requires_grad=True)
-        result, _, _= opt(init, self.model2, int(self.data_type.split('_')[-2]))
+        if len(init) != 0 : result, _, _= opt(init, self.model2, 
+                              int(self.data_type.split('_')[-2]))
+        else: result=[]; vm_ids_init=[]
         
         decisionSource = []; decisionDest = []
         for partsId, part in zip(vm_ids_init, result):
