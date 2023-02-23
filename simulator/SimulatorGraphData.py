@@ -191,7 +191,10 @@ class Simulator () :
     
     def getjobIds (self):
         return [job.job_id for job in self.jobList]
-        
+    
+    def getNumInstances (self):
+        return len(self.graphData['instance'].x)
+    
     def getInstancsInVms (self):
         edges = self.graphData['instance', 'run_in', 'vm'].edge_index
         return [(int(instId), int(vmId)) for instId, vmId in zip(edges[0],edges[1])]
@@ -251,7 +254,8 @@ class Simulator () :
     
     def vmAllocateInit (self, decision):
         allocate_source = []; allocate_dest = []
-        routerBwToEach = self.totalbw / len(decision[0])
+        try: routerBwToEach = self.totalbw / len(decision[0])
+        except: pass
         #for vmId in decision[0]:
         #    print(len(self.getVmById(vmId).getInstancesOfVm()))
         for vmId, hostId in zip(decision[0], decision[1]):
