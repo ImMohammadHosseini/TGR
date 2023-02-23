@@ -31,6 +31,8 @@ class Instance ():
         if self.requiredExecTime() == 0:
             self.destroy()
             self.task.addCompleteInstance(self)
+        else :
+            self.updataNodeInfo()
         
     def getGraphId (self):
         creationIds = self.job.env.graphData['instance'].creationIds.detach().numpy()
@@ -49,6 +51,15 @@ class Instance ():
     def getVm (self):
         return self.job.env.getVmById(self.vmId)
     
+    def updataNodeInfo (self):
+        graphId = self.getGraphId()
+        newInfo = [self.duration, self.completDuration, self.cpuMax, 
+                   self.memMax, self.diskMax]
+        newInfo = torch.tensor(newInfo)
+        instNodes = self.job.env.graphData['instance'].x
+        instNodes[graphId] = newInfo
+        self.job.env.graphData['instance'].x = instNodes
+        
     def destroy (self):
         self.destroyAt = self.job.env.interval
         vm = self.getVm()
