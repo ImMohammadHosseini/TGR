@@ -17,8 +17,18 @@ class Job () :
             
         self.tasksId = []
         self.instancesId = []
-    
-    def destroyCompletedTasks (self):
+        
+    def addCompleteTask (self, task):
+        self.completedTasks.append(task)
+        '''self.taskList.remove(task)
+        if len(self.taskList) == 0:
+            self.destroy()
+            self.env.addCompletedJobInInterval(self)'''
+        if len(self.completedTasks) == len(self.taskList):
+            self.destroy()
+            self.env.addCompletedJobInInterval (self)
+            
+    '''def destroyCompletedTasks (self):
         remainTasks = []
         for task in self.taskList:
             task.destroyCompletedInstances()
@@ -27,7 +37,7 @@ class Job () :
             else:
                 task.destroy()
                 self.completedTasks.append(task)
-        self.taskList = remainTasks
+        self.taskList = remainTasks'''
                 
     def destroy (self):
         self.destroyAt = self.env.interval

@@ -51,7 +51,17 @@ class Task () :
         self.setGraphId(graphId)
         return graphId
     
-    def destroyCompletedInstances (self):
+    def addCompleteInstance (self, instance):
+        self.completedInstances.append(instance)
+        '''self.instanceList.remove(instance)
+        if len(self.instanceList) == 0:
+            self.destroy()
+            self.job.addCompleteTask(self)'''
+        if len(self.completedInstances) == len(self.instanceList):
+            self.destroy()
+            self.job.addCompleteTask(self)
+        
+    '''def destroyCompletedInstances (self):
         remainInstances = []
         for instance in self.instanceList:
             if instance.requiredExecTime() > 0:
@@ -59,7 +69,7 @@ class Task () :
             else: 
                 instance.destroy()
                 self.completedInstances.append(instance)
-        self.instanceList = remainInstances
+        self.instanceList = remainInstances'''
     
     
     def set_status (self) :
@@ -78,7 +88,7 @@ class Task () :
             instance.setGraphId(past_inst)
             self.instancesId.append(instance.creationId)
             self.job.instancesId.append(instance.creationId)
-            x_inst.append([instance.duration, instance.completDu,
+            x_inst.append([instance.duration, instance.completDuration,
                           instance.cpuMax, instance.memMax, instance.diskMax])
             creationId_instance.append(instance.creationId)
             
@@ -115,6 +125,13 @@ class Task () :
         dEdge1 = np.where(dEdge1<=graphId, dEdge1, dEdge1-1)
         self.job.env.graphData['task', 'depend', 'task'].edge_index = \
             torch.tensor([dEdge0, dEdge1]) 
-        
+            
+        pEdge0 = self.job.env.graphData['task', 'part_of', 'instance'].edge_index[0]
+        pEdge0 = pEdge0.detach().numpy()
+        pEdge1 = self.job.env.graphData['task', 'part_of', 'instance'].edge_index[1]
+        pEdge1 = pEdge1.detach().numpy()
+        pEdge0 = np.where(pEdge0<=graphId, pEdge0, pEdge0-1)
+        self.job.env.graphData['task', 'part_of', 'instance'].edge_index = \
+            torch.tensor([pEdge0, pEdge1])
         
         

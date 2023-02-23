@@ -62,10 +62,7 @@ class VM ():
         self.expectedCoreNum = max(0, expectedCores)
     
     def getRequestsCore (self):
-        try:
-            return max(self.instances['core'].to_list())
-        except:
-            print('rid',self.id)
+        return max([0]+self.instances['core'].to_list())
         
     def getExpectedFreeRam (self):
         return self.expectedRamCap
@@ -80,7 +77,7 @@ class VM ():
         self.expectedRamCap = max(0, expectedRam)
         
     def getRequestsRam (self):
-        return max(self.instances['ram'].to_list())
+        return max([0]+self.instances['ram'].to_list())
     
     def getExpectedFreeDisk (self):
         return self.expectedDiskCap
@@ -95,7 +92,7 @@ class VM ():
         self.expectedDiskCap = max(0, expectedDisk)
         
     def getRequestsDisk (self):
-        return max(self.instances['disk'].to_list())
+        return max([0]+self.instances['disk'].to_list())
 
     def possibleToAddInstance (self, instance):
         return (instance.cpuMax <= self.getExpectedFreeCores() and \
@@ -119,15 +116,16 @@ class VM ():
     def execute (self, lastMigrationTime):
         assert self.hostId != -1
         self.totalMigrationTime += lastMigrationTime
-        execTime = self.datacenter.env.intervaltime - lastMigrationTime
+        remainExecTime = self.datacenter.env.intervaltime - lastMigrationTime
         #TODO change for loop for get best instance line
         for instanceCreationId in self.instances['creationId']:
             instance = self.datacenter.env.getInstanceById(instanceCreationId)
+            assert instance.vmId != -1
             requiredExecTime = instance.requiredExecTime()
-            self.totalExecTime += min(execTime, requiredExecTime)
-            execTime -= min(execTime, requiredExecTime)
-            instance.completDu += min(execTime, requiredExecTime)
-            if execTime == 0:
+            self.totalExecTime += min(remainExecTime, requiredExecTime)
+            remainExecTime -= min(remainExecTime, requiredExecTime)
+            instance.addCompleteDuration(min(remainExecTime, requiredExecTime))
+            if remainExecTime == 0:
                 break
         
     def allocateAndExecute (self, host, allocBw) :

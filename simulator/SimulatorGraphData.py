@@ -28,6 +28,7 @@ class Simulator () :
         self.datacenterlist = []
         self.jobList = []
         self.completedJobs = []
+        self.completedJobsInInterval = []
         
         self.graphData = HeteroData()
         self.graphInit()
@@ -106,8 +107,27 @@ class Simulator () :
                     edge1 = np.delete(edge1, indx)
         self.graphData['vm', 'run_by', 'host'].edge_index =  \
             torch.tensor([edge0, edge1]) 
-        
+     
+    def addCompletedJobInInterval (self, job):
+        self.completedJobsInInterval.append(job)
+        #self.jobList.remove(job)
+    
     def destroyCompletedJobs (self):
+        destroyed = self.completedJobsInInterval
+        remainJobs = []
+        for job in self.jobList:
+            if job not in destroyed:
+                remainJobs.append(job)
+        self.completedJobsInInterval = []
+        self.completedJobs += destroyed
+        self.jobList = remainJobs
+        return self.getDestroyedIds(destroyed)
+    
+    def getDestroyedIds (self, destroyed):
+        return [job.job_id for job in  destroyed]
+        
+                
+    '''def destroyCompletedJobs (self):
         remainJobs = []; destroyed = []
         for job in self.jobList:
             job.destroyCompletedTasks()
@@ -118,7 +138,7 @@ class Simulator () :
                 destroyed.append(job.job_id)
         self.jobList = remainJobs
         self.completedJobs += destroyed
-        return destroyed
+        return destroyed'''
     
     def addJobs (self, newJobsList):
         self.interval += 1
