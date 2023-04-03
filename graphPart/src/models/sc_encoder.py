@@ -85,9 +85,9 @@ class Sc_encoder(nn.Module):
         vmNode = x_dict['vm']
         instanceNode = x_dict['instance']
         
-        host_z_mc = self.inter([hostNode])
-        vm_z_mc = self.inter([vmNode])
-        instance_z_mc = self.inter([instanceNode])
+        host_z_mc = self.host_inter([hostNode])
+        vm_z_mc = self.vm_inter([vmNode])
+        instance_z_mc = self.instance_inter([instanceNode])
 
         return host_z_mc, vm_z_mc, instance_z_mc
 
