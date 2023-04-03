@@ -9,12 +9,15 @@ import logging as logger
 import configparser
 import pickle
 import shutil
+import multiprocessing
 from time import time
 from os import system, rename
 
 from simulator.SimulatorGraphData import Simulator
 from scheduler.GraphGOBIScheduler import GraphGOBIScheduler
 from simulator.workload.ClusterdataWorkload import CDJB
+from graphPart.train import GraphEmbedding
+
 from utils.ColorUtils import color
 
 usage = "usage: python main.py -e <environment> -m <mode> # empty environment run simulator"
@@ -37,12 +40,44 @@ DATACENTERINFO = [(HOSTS, VMS), (HOSTS, VMS), (HOSTS, VMS)]#TODO add geographic 
 TOTAL_POWER = 1000
 ROUTER_BW = 10000
 INTERVAL_TIME = 300 # seconds
+EMB_DIM = 5
 logFile = 'COSCO.log'
 
 if len(sys.argv) > 1:
 	with open(logFile, 'w'): os.utime(logFile, None)
+    
+def graphModelTrainerProcess (graph):
+    pass
 
+def simulatorProcess ():
+    pass
 
+def scedulerProcess ():
+    pass
+
+def init ():
+    workload = CDJB(ARRIVALRATE, 2)
+    graphEmbedding = GraphEmbedding()#(emb_dim=EMB_DIM)
+    #graphModelTrainer = GraphContrastiveTrainer(graphModel, loss)
+    
+    scheduler = GraphGOBIScheduler('energy_latency_'+str(DATACENTERS*HOSTS)+\
+                                   '_'+str(DATACENTERS*VMS), graphModel,
+                                   EMB_DIM)
+    env = Simulator(DATACENTERS, HOSTS, VMS, TOTAL_POWER, ROUTER_BW, 
+                    scheduler, INTERVAL_TIME, DATACENTERINFO)
+    newjobinfos = workload.generateNewJobs(env.interval, env)
+    env.addJobsInit(newjobinfos)
+    print("All jobs' IDs:", env.getjobIds())
+    
+    trainGraph = multiprocessing.Process(target=graphModelTrainerProcess)
+    scheduler = multiprocessing.Process(target=scedulerProcess)
+    
+    trainGraph.start()
+    scheduler.start()
+    
+    trainGraph.join()
+    scheduler.join()
+    
 def initalizeEnvironment (environment, logger):
     
     workload = CDJB(ARRIVALRATE, 2)
@@ -53,12 +88,14 @@ def initalizeEnvironment (environment, logger):
     #TODO add state stats = Stats(env, workload, datacenter, scheduler)
     newjobinfos = workload.generateNewJobs(env.interval, env)
     env.addJobsInit(newjobinfos)
+    print("All jobs' IDs:", env.getjobIds())
     start = time()
     instDecision = scheduler.instancePlacement()
     firstSchedulingTime = time() - start
     instAllocation = env.instanceAllocate(instDecision) 
     env.addRunInEdges(instAllocation)
 
+    print("Num Instances in vms {(vmId, numInstance)}:", env.getNumInstancsInVms())
     start = time()
     vmDecision = scheduler.vmPlacement()
     secondSchedulingTime = time() - start
@@ -67,9 +104,7 @@ def initalizeEnvironment (environment, logger):
     schedulingTime = firstSchedulingTime + secondSchedulingTime
     
     #TODOworkload.updateDeployedContainers(env.getCreationIDs(migrations, deployed)) 
-    print("All jobs' IDs:", env.getjobIds())
-    print("num instances:", env.getNumInstances())
-    print("Num Instances in vms {(vmId, numInstance)}:", env.getNumInstancsInVms())
+    print("num remain instances:", env.getNumInstances())
     print("VMs in host (vmId, hostId):", env.getVmsInHosts())
     
     #TODOprintDecisionAndMigrations(decision, migrations)
@@ -81,13 +116,15 @@ def initalizeEnvironment (environment, logger):
 def stepSimulation (workload, scheduler, env):
     newjobinfos = workload.generateNewJobs(env.interval, env)
     destroyed = env.addJobs(newjobinfos)
+    print("All jobs' IDs:", env.getjobIds())
     env.returnCompleteVm()
     start = time()
     instDecision = scheduler.instancePlacement()
     firstSchedulingTime = time() - start
     instAllocation = env.instanceAllocate(instDecision) 
     env.addRunInEdges(instAllocation)
-
+    
+    print("Num Instances in vms {(vmId, numInstance)}:", env.getNumInstancsInVms())
     start = time()
     vmDecision = scheduler.filter_placement(scheduler.vmPlacement()) 
     secondSchedulingTime = time() - start
@@ -96,10 +133,8 @@ def stepSimulation (workload, scheduler, env):
 
     #TODOworkload.updateDeployedContainers(
     
-    print("All jobs' IDs:", env.getjobIds())
-    print("num instances:", env.getNumInstances())
+    print("num remain instances:", env.getNumInstances())
     print("Destroyed:", destroyed)
-    print("Num Instances in vms {(vmId, numInstance)}:", env.getNumInstancsInVms())
     print("VMs in host (vmId, hostId):", env.getVmsInHosts())
     #printDecisionAndMigrations(decision, migrations)
     #TODOstats.saveStats()
