@@ -5,16 +5,8 @@
 import os
 import torch
 from src.constants import MODEL_SAVE_PATH
-import src.utils
 from src.utils import color
 
-def save_graph_model ():
-    #TODO
-    pass
-
-def load_graph_model ():
-    #TODO
-    pass
  
 def save_model (model, optimizer, epoch, accuracy_list):
 	file_path = MODEL_SAVE_PATH + "/" + model.name + "_" + str(epoch) + ".ckpt"
