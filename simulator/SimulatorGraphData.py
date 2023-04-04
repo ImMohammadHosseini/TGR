@@ -56,7 +56,9 @@ class Simulator () :
                                                                         [[], []]).long()
         self.graphData['instance', 'run_in', 'vm'].edge_index = torch.tensor(
                                                                         [[], []]).long()
-        
+    def getNodeTypes (self):
+        return self.graphData.node_types
+    
     def addDatacenterListInit (self, datacenterlist) :
         assert len(datacenterlist) == self.datacenterlimit
         for numHosts, numVMs in datacenterlist:
@@ -276,8 +278,7 @@ class Simulator () :
         allocate_source = []; allocate_dest = []
         try: routerBwToEach = self.totalbw / len(decision[0])
         except: pass
-        #for vmId in decision[0]:
-        #    print(len(self.getVmById(vmId).getInstancesOfVm()))
+        
         for vmId, hostId in zip(decision[0], decision[1]):
             vm = self.getVmById(vmId)
             host = self.getHostById(hostId)
@@ -285,7 +286,6 @@ class Simulator () :
             numberAllocToHost = len(self.scheduler.getMigrationToHost(hostId,
                                                                       decision))
             allocbw = min(host.bwCap/ numberAllocToHost, routerBwToEach)
-            #TODO Host possibleToAddVm
             if host.possibleToAddVm(vm):
                 allocate_source.append(vmId)
                 allocate_dest.append(hostId)

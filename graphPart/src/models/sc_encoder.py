@@ -36,7 +36,7 @@ class inter_att(nn.Module):
     
 class Sc_encoder(nn.Module):
     #TODO check sample_rate
-    def __init__(self, hidden_dim, attn_drop, num_layers=1):
+    def __init__(self, hidden_dim, attn_drop, num_layers=2):
         super(Sc_encoder, self).__init__()
         
         
