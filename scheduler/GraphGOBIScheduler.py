@@ -9,7 +9,6 @@ import numpy as np
 
 from .Scheduler import Scheduler
 from .GraphBaGTI.train import load_model
-from .GraphBaGTI.src.GraphModel import GNNEncoder
 from .GraphBaGTI.src.models import energy_latency_30_60_first
 from .GraphBaGTI.src.models import energy_latency_30_60_second
 #from .GraphBaGTI.src.utils import *
@@ -17,16 +16,16 @@ from .GraphBaGTI.src.opt import opt
 
 
 class GraphGOBIScheduler(Scheduler):
-    def __init__ (self, data_type,
-                  emb_dim : int = 5) :
+    def __init__ (self, data_type, emb_dim : int) :
         self.emb_dim = emb_dim
-        self.graphRepre = GNNEncoder (emb_dim=emb_dim)
+        #TODO save model
+        #TODO self.graphRepre = load_model and save model
+        
         self.model1 = eval(data_type+"_first()")
         self.model2 = eval(data_type+"_second()")
         self.data_type = data_type
         self.hosts = int(data_type.split('_')[-2])
         self.vms = int(data_type.split('_')[-1])
-        #TODO add self.graphRepre load model and save model
         self.model1, _, _, _ = load_model(data_type, self.model1, data_type)
         self.model2, _, _, _ = load_model(data_type, self.model2, data_type)
         #dtl = data_type.split('_')
@@ -58,11 +57,10 @@ class GraphGOBIScheduler(Scheduler):
                 
         return inits, ins_ids_init
     
-    def first_step (self) :
-        #TODO add graphrepresentatio in learning process
+    def first_step (self, vm_emb, instance_emb) :
         #if not first_sch: self.env.nodeUpdate()
         schedueled_instances = self.env.graphData['instance', 'run_in', 'vm'].edge_index[0]
-        _, vm_emb, instance_emb = self.graphRepre(self.env.graphData)
+        #_, vm_emb, instance_emb = self.graphRepre(self.env.graphData)
         init, instance_ids_init = self.first_step_init(vm_emb, 
                                                        instance_emb, 
                                                        schedueled_instances)
@@ -110,10 +108,9 @@ class GraphGOBIScheduler(Scheduler):
                     vm_id_init=[]; vm_prep = []; oneHots = []
         return inits, vm_ids_init
     
-    def second_step (self) :
+    def second_step (self, host_emb, vm_emb) :
         #TODO if not first_sch: self.env.nodeUpdate()
-        #TODO add graphrepresentatio in learning process
-        host_emb, vm_emb, _ = self.graphRepre(self.env.graphData)
+        #host_emb, vm_emb, _ = self.graphRepre(self.env.graphData)
         init, vm_ids_init = self.second_step_init(host_emb, vm_emb)
         init = torch.tensor(init, dtype=torch.float, requires_grad=True)
         if len(init) != 0 : result, _, _= opt(init, self.model2, 
