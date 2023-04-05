@@ -72,10 +72,27 @@ def graphModelTrainerProcess (trainer, graph):
             print('Early stopping!')
             break
 
-def simulatorProcess ():
-    pass
+def secondProcess (trainer):
+    _, vm_embed, instance_embed = trainer.embedding_step(
+        deepcopy(env.graphData))
+    
+    start = time()
+    instDecision = scheduler.instancePlacement(vm_embed, instance_embed)
+    firstSchedulingTime = time() - start
+    instAllocation = env.instanceAllocate(instDecision) 
+    env.addRunInEdges(instAllocation)
 
-def scedulerProcess ():
+    print("Num Instances in vms {(vmId, numInstance)}:", env.getNumInstancsInVms())
+    
+    host_embed, vm_embed, _ = trainer.embedding_step(
+        deepcopy(env.graphData))
+    
+    start = time()
+    scheduler.vmPlacement(host_embed, vm_embed)#vmDecision = 
+    secondSchedulingTime = time() - start
+    schedulingTime = firstSchedulingTime + secondSchedulingTime
+
+def executeProcess (init='false'):
     pass
 
 def init ():
@@ -93,7 +110,7 @@ def init ():
     print("All jobs' IDs:", env.getjobIds())
     
     trainGraph = multiprocessing.Process(target=graphModelTrainerProcess)
-    scheduler = multiprocessing.Process(target=scedulerProcess)
+    scheduler = multiprocessing.Process(target=secondProcess)
     
     trainGraph.start()
     scheduler.start()
@@ -114,21 +131,13 @@ def initalizeEnvironment (environment, logger):
     newjobinfos = workload.generateNewJobs(env.interval, env)
     env.addJobsInit(newjobinfos)
     print("All jobs' IDs:", env.getjobIds())
+    
     graphModelTrainerProcess(graphTrainer, deepcopy(env.graphData))
+    graphTrainer.setEmbedModel()
+    secondProcess(graphTrainer)
     
-    start = time()
-    instDecision = scheduler.instancePlacement()
-    firstSchedulingTime = time() - start
-    instAllocation = env.instanceAllocate(instDecision) 
-    env.addRunInEdges(instAllocation)
-
-    print("Num Instances in vms {(vmId, numInstance)}:", env.getNumInstancsInVms())
-    start = time()
-    vmDecision = scheduler.vmPlacement()
-    secondSchedulingTime = time() - start
-    allocats = env.vmAllocateInit(vmDecision)#TODO Vm execute
+    allocats = env.vmAllocateInit()#TODO Vm execute   #vmDecision
     
-    schedulingTime = firstSchedulingTime + secondSchedulingTime
     
     #TODOworkload.updateDeployedContainers(env.getCreationIDs(migrations, deployed)) 
     print("num remain instances:", env.getNumInstances())
@@ -138,25 +147,19 @@ def initalizeEnvironment (environment, logger):
 
     #TODOstats.saveStats()
     
-    return workload, scheduler, env#, stats
+    return workload, scheduler, env, graphTrainer#, stats
 
-def stepSimulation (workload, scheduler, env):
+def stepSimulation (workload, scheduler, env, graphTrainer):
     newjobinfos = workload.generateNewJobs(env.interval, env)
     destroyed = env.addJobs(newjobinfos)
     print("All jobs' IDs:", env.getjobIds())
     env.returnCompleteVm()
-    start = time()
-    instDecision = scheduler.instancePlacement()
-    firstSchedulingTime = time() - start
-    instAllocation = env.instanceAllocate(instDecision) 
-    env.addRunInEdges(instAllocation)
     
-    print("Num Instances in vms {(vmId, numInstance)}:", env.getNumInstancsInVms())
-    start = time()
-    vmDecision = scheduler.filter_placement(scheduler.vmPlacement()) 
-    secondSchedulingTime = time() - start
-    migrations = env.simulationStep(vmDecision)
-    schedulingTime = firstSchedulingTime + secondSchedulingTime
+    graphModelTrainerProcess(graphTrainer, deepcopy(env.graphData))
+    graphTrainer.setEmbedModel()
+    secondProcess(graphTrainer)
+
+    env.simulationStep()#migrations =  #vmDecision
 
     #TODOworkload.updateDeployedContainers(
     
@@ -169,11 +172,11 @@ def stepSimulation (workload, scheduler, env):
 if __name__ == '__main__':
     env, mode = opts.env, int(opts.mode)
     
-    workload, scheduler, env = initalizeEnvironment(env, logger)
+    workload, scheduler, env, graphTrainer = initalizeEnvironment(env, logger)
     
     for step in range(NUM_SIM_STEPS):
         print(color.BOLD+"Simulation Interval:", step, color.ENDC)
-        stepSimulation(workload, scheduler, env)#, stats
+        stepSimulation(workload, scheduler, env, graphTrainer)#, stats
         #TODOif env != '' and step % 10 == 0: saveStats()
         
     #TODOsaveStats(stats, datacenter, workload, env)
