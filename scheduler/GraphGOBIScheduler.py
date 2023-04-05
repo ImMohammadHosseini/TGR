@@ -11,7 +11,6 @@ from .Scheduler import Scheduler
 from .GraphBaGTI.train import load_model
 from .GraphBaGTI.src.models import energy_latency_30_60_first
 from .GraphBaGTI.src.models import energy_latency_30_60_second
-#from .GraphBaGTI.src.utils import *
 from .GraphBaGTI.src.opt import opt
 
 
@@ -19,7 +18,6 @@ class GraphGOBIScheduler(Scheduler):
     def __init__ (self, data_type, emb_dim : int) :
         self.emb_dim = emb_dim
         #TODO save model
-        #TODO self.graphRepre = load_model and save model
         
         self.model1 = eval(data_type+"_first()")
         self.model2 = eval(data_type+"_second()")
@@ -60,7 +58,7 @@ class GraphGOBIScheduler(Scheduler):
     def first_step (self, vm_emb, instance_emb) :
         #if not first_sch: self.env.nodeUpdate()
         schedueled_instances = self.env.graphData['instance', 'run_in', 'vm'].edge_index[0]
-        #_, vm_emb, instance_emb = self.graphRepre(self.env.graphData)
+
         init, instance_ids_init = self.first_step_init(vm_emb, 
                                                        instance_emb, 
                                                        schedueled_instances)
@@ -110,7 +108,6 @@ class GraphGOBIScheduler(Scheduler):
     
     def second_step (self, host_emb, vm_emb) :
         #TODO if not first_sch: self.env.nodeUpdate()
-        #host_emb, vm_emb, _ = self.graphRepre(self.env.graphData)
         init, vm_ids_init = self.second_step_init(host_emb, vm_emb)
         init = torch.tensor(init, dtype=torch.float, requires_grad=True)
         if len(init) != 0 : result, _, _= opt(init, self.model2, 
@@ -126,13 +123,13 @@ class GraphGOBIScheduler(Scheduler):
                 decision = decision[-self.hosts:].tolist()
                 decisionDest.append(decision.index(max(decision)))
                 
-        return [decisionSource, decisionDest]
+        self.env.setVmDecision([decisionSource, decisionDest])
         
         
-    def instancePlacement (self) :
-        decision = self.first_step()
+    def instancePlacement (self, vm_embed, instance_embed) :
+        decision = self.first_step(vm_embed, instance_embed)
         return decision
     
-    def vmPlacement (self):
-        decision = self.second_step()
-        return decision
+    def vmPlacement (self, host_embed, vm_embed):
+        self.second_step(host_embed, vm_embed)
+        
