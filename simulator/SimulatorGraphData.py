@@ -35,6 +35,8 @@ class Simulator () :
         
         self.addDatacenterListInit(datacenterlistinit)
         
+        self.vmDecision = []
+        
     def graphInit (self):
         self.graphData['datacenter'].x = torch.tensor([])
         self.graphData['host'].x = torch.tensor([])
@@ -274,17 +276,20 @@ class Simulator () :
                 
         return [allocate_source, allocate_dest]
     
-    def vmAllocateInit (self, decision):
+    def setVmDecision (self, decision):
+        self.vmDecision = decision
+        
+    def vmAllocateInit (self): #, decision
         allocate_source = []; allocate_dest = []
-        try: routerBwToEach = self.totalbw / len(decision[0])
+        try: routerBwToEach = self.totalbw / len(self.vmDecision[0])
         except: pass
         
-        for vmId, hostId in zip(decision[0], decision[1]):
+        for vmId, hostId in zip(self.vmDecision[0], self.vmDecision[1]):
             vm = self.getVmById(vmId)
             host = self.getHostById(hostId)
             assert vm.hostId == -1
             numberAllocToHost = len(self.scheduler.getMigrationToHost(hostId,
-                                                                      decision))
+                                                                      self.decision))
             allocbw = min(host.bwCap/ numberAllocToHost, routerBwToEach)
             if host.possibleToAddVm(vm):
                 allocate_source.append(vmId)
@@ -293,20 +298,21 @@ class Simulator () :
         
         _, _ = self.addRunByEdges([allocate_source, allocate_dest])
         
-        return [allocate_source, allocate_dest]
+        #return [allocate_source, allocate_dest]
                 
-    def simulationStep (self, decision) :
-        routerBwToEach=self.totalbw/len(decision[0]) if len(decision[0]) > 0 \
-            else self.totalbw
+    def simulationStep (self) :#, decision
+        routerBwToEach=self.totalbw/len(self.vmDecision[0]) \
+            if len(self.vmDecision[0]) > 0 else self.totalbw
         migrationsSource = []; migrationDest = []    
-        for vid, hid in zip(decision[0], decision[1]):
+        for vid, hid in zip(self.vmDecision[0], self.vmDecision[1]):
             vm = self.getVmById(vid)
             currentHostID = vm.hostId
             currentHost = self.getHostById(currentHostID)
             targetHost = self.getHostById(hid)
             migrateFromNum = len(self.scheduler.getMigrationFromHost(currentHostID, 
-                                                                     decision))
-            migrateToNum = len(self.scheduler.getMigrationToHost(hid, decision))
+                                                                     self.vmDecision))
+            migrateToNum = len(self.scheduler.getMigrationToHost(hid, 
+                                                                 self.vmDecision))
             if currentHostID != -1:
                 allocbw = min(targetHost.bwCap / migrateToNum, 
                               currentHost.bwCap / migrateFromNum, 
@@ -325,5 +331,5 @@ class Simulator () :
             vm = self.getVmById(vmId)
             vm.execute(0)
         
-        return [migrationsSource, migrationDest]
+        #return [migrationsSource, migrationDest]
         
