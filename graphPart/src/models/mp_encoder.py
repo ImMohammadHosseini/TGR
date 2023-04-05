@@ -99,9 +99,9 @@ class Mp_encoder(nn.Module):
         self.P = P
         
         self.gcn_layers = CustomHeteroConv({
-            ('host', 'DS', 'host'):GCNConv((-1,-1), hidden_dim, 
+            ('host', 'datacenter', 'host'):GCNConv((-1,-1), hidden_dim, 
                                            add_self_loops=False),
-            ('vm', 'DS', 'vm'):GCNConv((-1,-1), hidden_dim, 
+            ('vm', 'datacenter', 'vm'):GCNConv((-1,-1), hidden_dim, 
                                            add_self_loops=False),
             ('vm', 'host', 'vm'):GCNConv((-1,-1), hidden_dim, 
                                          add_self_loops=False),

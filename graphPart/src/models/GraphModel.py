@@ -35,7 +35,7 @@ class GNNEncoder (nn.Module):
             nn.ELU(),
             nn.Linear(hidden_dim, hidden_dim)
         )
-    def forward (self, graph, mps, device="cpu", mode="test"):
+    def forward (self, graph, mps, device="cpu", mode="embedding"):
         for i, ntype in enumerate(self.nodes_type):
             graph[ntype].x = F.elu(self.feat_drop(
                 self.node_project[i](graph[ntype].x)))
