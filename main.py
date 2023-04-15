@@ -32,6 +32,7 @@ ARRIVALRATE = 5
 DATACENTERS = 3
 HOSTS = 10 #for each datacenter
 VMS = 20 # for each datacenter
+DATA_TYPE = 'energy_latency_'+str(DATACENTERS*HOSTS)+'_'+str(DATACENTERS*VMS)
 DATACENTERINFO = [(HOSTS, VMS), (HOSTS, VMS), (HOSTS, VMS)]#TODO add geographic infos
 TOTAL_POWER = 1000
 ROUTER_BW = 10000
@@ -46,6 +47,7 @@ LR = 0.0001
 LAM = 0.5
 TAU = 0.7
 NB_EPOCHS = 50
+PATIENCE = 10
 
 logFile = 'COSCO.log'
 
@@ -58,21 +60,23 @@ def graphModelTrainerProcess (trainer, graph):
     best_t = 0
     
     for epoch in range(NB_EPOCHS):
-        loss = trainer.train_step(graph)
+        loss = trainer.train_step(deepcopy(graph))
         print(f'Epoch: {epoch:03d}, Loss: {loss:.4f}')
         if loss < best:
             best = loss
             best_t = epoch
             cnt_wait = 0
-            trainer.save_model(epoch)#TODO)
+            trainer.save_model()
+        
         else:
             cnt_wait += 1
 
-        if cnt_wait == args.patience:
+        if cnt_wait == PATIENCE:
             print('Early stopping!')
             break
+        break
 
-def secondProcess (trainer):
+def secondProcess (env, trainer):
     _, vm_embed, instance_embed = trainer.embedding_step(
         deepcopy(env.graphData))
     
@@ -97,36 +101,43 @@ def executeProcess (init='false'):
 
 def init ():
     workload = CDJB(ARRIVALRATE, 2)
-    graphEmbedding = GraphEmbedding()#(emb_dim=EMB_DIM)
-    #graphModelTrainer = GraphContrastiveTrainer(graphModel, loss)
-    
-    scheduler = GraphGOBIScheduler('energy_latency_'+str(DATACENTERS*HOSTS)+\
-                                   '_'+str(DATACENTERS*VMS), EMB_DIM)
-    
+    scheduler = GraphGOBIScheduler(DATA_TYPE, EMB_DIM)
     env = Simulator(DATACENTERS, HOSTS, VMS, TOTAL_POWER, ROUTER_BW, 
                     scheduler, INTERVAL_TIME, DATACENTERINFO)
+    graphTrainer = GraphEmbedding(DATA_TYPE, env.getNodeTypes(), DEVICE, 
+                                  EMB_DIM, FEAT_DROP, ATTN_DROP, LR, LAM, TAU)
+    
     newjobinfos = workload.generateNewJobs(env.interval, env)
     env.addJobsInit(newjobinfos)
     print("All jobs' IDs:", env.getjobIds())
     
-    trainGraph = multiprocessing.Process(target=graphModelTrainerProcess)
-    scheduler = multiprocessing.Process(target=secondProcess)
+    trainGraph = multiprocessing.Process(target=graphModelTrainerProcess, 
+                                         args=(graphTrainer, 
+                                               deepcopy(env.graphData),))
+    second = multiprocessing.Process(target=secondProcess, args=(graphTrainer,))
     
     trainGraph.start()
-    scheduler.start()
-    
+    second.start()
     trainGraph.join()
-    scheduler.join()
+    second.join()
+    
+    env.vmAllocateInit()
+    
+    print("num remain instances:", env.getNumInstances())
+    print("VMs in host (vmId, hostId):", env.getVmsInHosts())
+    
+    return workload, scheduler, env, graphTrainer#, stats
     
 def initalizeEnvironment (environment, logger):
     
     workload = CDJB(ARRIVALRATE, 2)
-    scheduler = GraphGOBIScheduler('energy_latency_'+str(DATACENTERS*HOSTS)+\
-                                   '_'+str(DATACENTERS*VMS))
+    
+    scheduler = GraphGOBIScheduler(DATA_TYPE, EMB_DIM)
     env = Simulator(DATACENTERS, HOSTS, VMS, TOTAL_POWER, ROUTER_BW, 
                     scheduler, INTERVAL_TIME, DATACENTERINFO)
-    graphTrainer = GraphEmbedding(env.getNodeTypes(), DEVICE, EMB_DIM, 
-                                  FEAT_DROP, ATTN_DROP, LR, LAM, TAU)
+    
+    graphTrainer = GraphEmbedding(DATA_TYPE, env.getNodeTypes(), DEVICE, 
+                                  EMB_DIM, FEAT_DROP, ATTN_DROP, LR, LAM, TAU)
     #TODO add state stats = Stats(env, workload, datacenter, scheduler)
     newjobinfos = workload.generateNewJobs(env.interval, env)
     env.addJobsInit(newjobinfos)
@@ -134,20 +145,20 @@ def initalizeEnvironment (environment, logger):
     
     graphModelTrainerProcess(graphTrainer, deepcopy(env.graphData))
     graphTrainer.setEmbedModel()
-    secondProcess(graphTrainer)
+    secondProcess(env, graphTrainer)
     
-    allocats = env.vmAllocateInit()#TODO Vm execute   #vmDecision
-    
+    env.vmAllocateInit()#TODO Vm execute   # allocats =  #vmDecision
     
     #TODOworkload.updateDeployedContainers(env.getCreationIDs(migrations, deployed)) 
     print("num remain instances:", env.getNumInstances())
     print("VMs in host (vmId, hostId):", env.getVmsInHosts())
-    
     #TODOprintDecisionAndMigrations(decision, migrations)
-
     #TODOstats.saveStats()
     
     return workload, scheduler, env, graphTrainer#, stats
+
+def step (workload, scheduler, env, graphTrainer):
+    pass
 
 def stepSimulation (workload, scheduler, env, graphTrainer):
     newjobinfos = workload.generateNewJobs(env.interval, env)
@@ -157,7 +168,7 @@ def stepSimulation (workload, scheduler, env, graphTrainer):
     
     graphModelTrainerProcess(graphTrainer, deepcopy(env.graphData))
     graphTrainer.setEmbedModel()
-    secondProcess(graphTrainer)
+    secondProcess(env, graphTrainer)
 
     env.simulationStep()#migrations =  #vmDecision
 
