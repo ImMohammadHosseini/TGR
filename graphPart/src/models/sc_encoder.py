@@ -39,7 +39,7 @@ class Sc_encoder(nn.Module):
     def __init__(self, hidden_dim, attn_drop, num_layers=2):
         super(Sc_encoder, self).__init__()
         
-        
+        self.convs = torch.nn.ModuleList()
         for _ in range(num_layers):
             conv = HeteroConv({
                 ('datacenter', 'dsho', 'host'): GATConv((-1,-1), hidden_dim,
@@ -78,9 +78,10 @@ class Sc_encoder(nn.Module):
         x_dict = graph.x_dict
         edge_index_dict = graph.edge_index_dict
         
-        x_dict = self.conv(x_dict, edge_index_dict)
-        x_dict = {key: x.relu() for key, x in x_dict.items()}
-            
+        for conv in self.convs:
+            x_dict = conv(x_dict, edge_index_dict)
+            x_dict = {key: x.relu() for key, x in x_dict.items()}
+        
         hostNode = x_dict['host']
         vmNode = x_dict['vm']
         instanceNode = x_dict['instance']
