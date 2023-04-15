@@ -3,11 +3,8 @@
 
 """
 
-import torch
 import torch.nn as nn
-import numpy as np
 
-from torch_geometric.nn import HeteroConv, GraphConv, SAGEConv, GATv2Conv, GCNConv, Linear
 import torch.nn.functional as F
 
 from .mp_encoder import Mp_encoder
@@ -20,7 +17,7 @@ class GNNEncoder (nn.Module):
         self.nodes_type = nodes_type
      
         self.node_project = nn.ModuleList([nn.LazyLinear(hidden_dim, bias=True)
-                                      for _ in range(len(self.nodes_type)-1)])
+                                      for _ in range(len(self.nodes_type))])
     
         if projection_drop > 0:
             self.feat_drop = nn.Dropout(projection_drop)
@@ -35,12 +32,13 @@ class GNNEncoder (nn.Module):
             nn.ELU(),
             nn.Linear(hidden_dim, hidden_dim)
         )
-    def forward (self, graph, mps, device="cpu", mode="embedding"):
+    def forward (self, graph, mps, mode="embedding"):
+        print('hi')
         for i, ntype in enumerate(self.nodes_type):
             graph[ntype].x = F.elu(self.feat_drop(
                 self.node_project[i](graph[ntype].x)))
-        
-        z_mp = self.mp(graph.x_dict.detach(), mps)
+            
+        z_mp = self.mp(graph, mps)
         z_sc = self.sc(graph)
         
         if mode == "train":
