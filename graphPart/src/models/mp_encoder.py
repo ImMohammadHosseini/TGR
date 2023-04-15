@@ -99,17 +99,16 @@ class Mp_encoder(nn.Module):
         self.P = P
         
         self.gcn_layers = CustomHeteroConv({
-            ('host', 'datacenter', 'host'):GCNConv((-1,-1), hidden_dim, 
-                                           add_self_loops=False),
-            ('vm', 'datacenter', 'vm'):GCNConv((-1,-1), hidden_dim, 
-                                           add_self_loops=False),
-            ('vm', 'host', 'vm'):GCNConv((-1,-1), hidden_dim, 
-                                         add_self_loops=False),
-            ('instance', 'task', 'instance'):GCNConv((-1,-1), hidden_dim, 
-                                                     add_self_loops=False),
-            ('instance', 'vm', 'instance'):GCNConv((-1,-1), hidden_dim, 
+            ('host', 'datacenter', 'host'):GCNConv(-1, hidden_dim, 
                                                    add_self_loops=False),
-            }, aggr='sum')
+            ('vm', 'datacenter', 'vm'):GCNConv(-1, hidden_dim,
+                                               add_self_loops=False),
+            ('vm', 'host', 'vm'):GCNConv(-1,hidden_dim, add_self_loops=False),
+            ('instance', 'task', 'instance'):GCNConv(-1, hidden_dim, 
+                                                     add_self_loops=False),
+            ('instance', 'vm', 'instance'):GCNConv(-1, hidden_dim, 
+                                                   add_self_loops=False),
+            })
         
         self.prelu = nn.PReLU()
         
@@ -117,9 +116,9 @@ class Mp_encoder(nn.Module):
         self.vmAttention = Attention(hidden_dim, attn_drop)
         self.instanceAttention = Attention(hidden_dim, attn_drop)
 
-    def forward (self, h, mps):
-        
-        x_dict = self.gcn_layers(h, mps)
+    def forward (self, graph, mps):
+        x_dict = graph.x_dict
+        x_dict = self.gcn_layers(x_dict, mps)
         x_dict = {key:[self.prelu(x) for x in x_list] for key, x_list in x_dict.items()}
         
         hostEmbeds = x_dict['host']
