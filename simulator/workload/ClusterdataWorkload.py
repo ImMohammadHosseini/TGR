@@ -55,7 +55,6 @@ class CDJB (Workload) :
             task_list=[]
             jobs_tasks = workloadtasks.merge(job_idx.rename(2), on=2)
             jobs_instances = workloadinstances.merge(job_idx.rename(2), on=2)
-            task_list=[]
             for j, task_info in jobs_tasks.iterrows():
                 task_name = task_info[0]
                 plan_cpu = task_info[7]/100
