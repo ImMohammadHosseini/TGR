@@ -2,11 +2,12 @@
 import torch
 from torch import nn
 
-class contrastiveLoss(nn.Module):
+class ContrastiveLoss(nn.Module):
     def __init__(self,  lam, tau):
-        super(contrastiveLoss, self).__init__()
+        super(ContrastiveLoss, self).__init__()
         self.lam = lam
         self.tau = tau
+        self.log = torch.nn.LogSigmoid()
         
     def sim(self, z1, z2):
         z1_norm = torch.norm(z1, dim=-1, keepdim=True)
@@ -24,15 +25,17 @@ class contrastiveLoss(nn.Module):
     
             matrix_mp2sc = matrix_mp2sc/(torch.sum(
                 matrix_mp2sc, dim=1).view(-1, 1) + 1e-8)
-        
-            lori_mp = -torch.log(matrix_mp2sc.mul(pos.to_dense()).sum(dim=-1)).mean()
+            
+            lori_mp = -self.log(matrix_mp2sc.mul(pos.to_dense()).sum(dim=-1)).mean()
 
             matrix_sc2mp = matrix_sc2mp / (torch.sum(matrix_sc2mp, 
                                                      dim=1).view(-1, 1) + 1e-8)
-            lori_sc = -torch.log(matrix_sc2mp.mul(pos.to_dense()).sum(dim=-1)).mean()
-            
+            lori_sc = -self.log(matrix_sc2mp.mul(pos.to_dense()).sum(dim=-1)).mean()
+
             contrastValues.append(self.lam * lori_mp + (1 - self.lam) * lori_sc)
-        return sum(value * w for value, w in zip(contrastValues, weights)) / sum(weights)
+            #print(self.lam * lori_mp + (1 - self.lam) * lori_sc)
+            
+        return sum(value * w for value, w in zip(contrastValues, weights) if not torch.isnan(value).all()) / sum(weights)
 
 
 
