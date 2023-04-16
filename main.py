@@ -46,15 +46,18 @@ ATTN_DROP = 0.1
 LR = 0.0001
 LAM = 0.5
 TAU = 0.7
-NB_EPOCHS = 50
-PATIENCE = 10
+NB_EPOCHS = 100
+PATIENCE = 20
+GRAPH_FEAT_DIM = [2,4,4,5,5]#[DATACENTER,HOST,VM,TASK,INSTANCE]
 
 logFile = 'COSCO.log'
 
 if len(sys.argv) > 1:
 	with open(logFile, 'w'): os.utime(logFile, None)
-    
+gggraph=[]    
 def graphModelTrainerProcess (trainer, graph):
+    global gggraph 
+    gggraph = graph
     cnt_wait = 0
     best = 1e9
     best_t = 0
@@ -63,9 +66,11 @@ def graphModelTrainerProcess (trainer, graph):
         loss = trainer.train_step(deepcopy(graph))
         print(f'Epoch: {epoch:03d}, Loss: {loss:.4f}')
         if loss < best:
+            print(f'best: {best:.4f}, Loss: {loss:.4f}###')
             best = loss
             best_t = epoch
             cnt_wait = 0
+            print(cnt_wait)
             trainer.save_model()
         
         else:
@@ -74,9 +79,9 @@ def graphModelTrainerProcess (trainer, graph):
         if cnt_wait == PATIENCE:
             print('Early stopping!')
             break
-        break
+        #break
 
-def secondProcess (env, trainer):
+def secondProcess (env, trainer, scheduler):
     _, vm_embed, instance_embed = trainer.embedding_step(
         deepcopy(env.graphData))
     
@@ -105,7 +110,8 @@ def init ():
     env = Simulator(DATACENTERS, HOSTS, VMS, TOTAL_POWER, ROUTER_BW, 
                     scheduler, INTERVAL_TIME, DATACENTERINFO)
     graphTrainer = GraphEmbedding(DATA_TYPE, env.getNodeTypes(), DEVICE, 
-                                  EMB_DIM, FEAT_DROP, ATTN_DROP, LR, LAM, TAU)
+                                  GRAPH_FEAT_DIM, EMB_DIM, FEAT_DROP, 
+                                  ATTN_DROP, LR, LAM, TAU)
     
     newjobinfos = workload.generateNewJobs(env.interval, env)
     env.addJobsInit(newjobinfos)
@@ -137,7 +143,8 @@ def initalizeEnvironment (environment, logger):
                     scheduler, INTERVAL_TIME, DATACENTERINFO)
     
     graphTrainer = GraphEmbedding(DATA_TYPE, env.getNodeTypes(), DEVICE, 
-                                  EMB_DIM, FEAT_DROP, ATTN_DROP, LR, LAM, TAU)
+                                  GRAPH_FEAT_DIM, EMB_DIM, FEAT_DROP, 
+                                  ATTN_DROP, LR, LAM, TAU)
     #TODO add state stats = Stats(env, workload, datacenter, scheduler)
     newjobinfos = workload.generateNewJobs(env.interval, env)
     env.addJobsInit(newjobinfos)
@@ -145,7 +152,7 @@ def initalizeEnvironment (environment, logger):
     
     graphModelTrainerProcess(graphTrainer, deepcopy(env.graphData))
     graphTrainer.setEmbedModel()
-    secondProcess(env, graphTrainer)
+    secondProcess(env, graphTrainer, scheduler)
     
     env.vmAllocateInit()#TODO Vm execute   # allocats =  #vmDecision
     
@@ -168,7 +175,7 @@ def stepSimulation (workload, scheduler, env, graphTrainer):
     
     graphModelTrainerProcess(graphTrainer, deepcopy(env.graphData))
     graphTrainer.setEmbedModel()
-    secondProcess(env, graphTrainer)
+    secondProcess(env, graphTrainer, scheduler)
 
     env.simulationStep()#migrations =  #vmDecision
 
