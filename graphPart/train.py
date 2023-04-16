@@ -12,16 +12,16 @@ from .src.models.graphModel import GNNEncoder
 from .src.contrastiveLoss import ContrastiveLoss
 
 class GraphEmbedding ():
-    def __init__ (self, data_type, node_types, device, embed_dim, feat_drop, 
-                  attn_drop, lr, lam, tau, 
+    def __init__ (self, data_type, node_types, device, in_features:list,
+                  embed_dim, feat_drop, attn_drop, lr, lam, tau, 
                   pretrainedModelPath="graphPart/pretrained/"):
         self.mpTypes = ['host_datacenter_host', 'vm_datacenter_vm', 'vm_host_vm', 
                         'instance_task_instance', 'instance_vm_instance']
         self.P = len(self.mpTypes)
         self.pretrainedModelPath = pretrainedModelPath
         self.device=device
-        self.model = GNNEncoder(embed_dim, node_types, feat_drop, attn_drop, 
-                                self.P)
+        self.model = GNNEncoder(in_features, embed_dim, node_types, feat_drop, 
+                                attn_drop, self.P)
         self.model.to(device=self.device)
         
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
@@ -141,7 +141,7 @@ class GraphEmbedding ():
     
     def embedding_step (self, graph):
         mps, _ = self.get_matrix(graph, mode="embedding")
-        return self.embedModel(graph, mps, mode="embedding")
+        return self.embedModel(graph.to(self.device), mps, mode="embedding")
     
     
 
