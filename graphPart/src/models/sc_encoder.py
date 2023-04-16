@@ -81,7 +81,7 @@ class Sc_encoder(nn.Module):
         for conv in self.convs:
             x_dict = conv(x_dict, edge_index_dict)
             x_dict = {key: x.relu() for key, x in x_dict.items()}
-        
+
         hostNode = x_dict['host']
         vmNode = x_dict['vm']
         instanceNode = x_dict['instance']

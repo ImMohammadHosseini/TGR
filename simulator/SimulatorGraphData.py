@@ -289,7 +289,7 @@ class Simulator () :
             host = self.getHostById(hostId)
             assert vm.hostId == -1
             numberAllocToHost = len(self.scheduler.getMigrationToHost(hostId,
-                                                                      self.decision))
+                                                                      self.vmDecision))
             allocbw = min(host.bwCap/ numberAllocToHost, routerBwToEach)
             if host.possibleToAddVm(vm):
                 allocate_source.append(vmId)

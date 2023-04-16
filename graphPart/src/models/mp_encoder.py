@@ -120,11 +120,11 @@ class Mp_encoder(nn.Module):
         x_dict = graph.x_dict
         x_dict = self.gcn_layers(x_dict, mps)
         x_dict = {key:[self.prelu(x) for x in x_list] for key, x_list in x_dict.items()}
-        
         hostEmbeds = x_dict['host']
         vmEmbeds = x_dict['vm']
         instanceEmbeds = x_dict['instance']
-        
+        #print(torch.isnan(instanceEmbeds).any())
+
         host_z_mp = self.hostAttention(hostEmbeds)
         vm_z_mp = self.vmAttention(vmEmbeds)
         instance_z_mp = self.instanceAttention(instanceEmbeds)

@@ -34,8 +34,8 @@ class GraphGOBIScheduler(Scheduler):
         return []
     
     def first_step_init (self, vm_emb, instance_emb, schedueled_instances) :
-        vm_emb = vm_emb.detach().numpy()
-        instance_emb = instance_emb.detach().numpy()
+        vm_emb = vm_emb.cpu().detach().numpy()
+        instance_emb = instance_emb.cpu().detach().numpy()
         schedueled_instances = schedueled_instances.detach().numpy()
         
         inits = []
@@ -75,8 +75,8 @@ class GraphGOBIScheduler(Scheduler):
         return [decisionSource, decisionDest]
     
     def second_step_init (self, host_emb, vm_emb) :
-        host_emb = host_emb.detach().numpy()
-        vm_emb = vm_emb.detach().numpy()
+        host_emb = host_emb.cpu().detach().numpy()
+        vm_emb = vm_emb.cpu().detach().numpy()
         
         inits = []
         vm_ids_init = []; vm_id_init = []; vm_prep = []; oneHots = [];
